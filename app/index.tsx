@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { SafeAreaView, StatusBar, StyleSheet, Text, View } from "react-native";
-import PermissionsModal from "./components/PermissionsModal";
-import WiFiScanner from "./components/WiFiScanner";
+import PermissionsModal from "../components/PermissionsModal";
+import WiFiScanner from "../components/WiFiScanner";
 import {
   checkPermissions,
   PermissionStatus,
   requestPermissions,
-} from "./utils/permissions";
+} from "../utils/permissions";
 
 export default function App() {
   const [permissionStatus, setPermissionStatus] = useState<PermissionStatus>({

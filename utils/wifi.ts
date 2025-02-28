@@ -1,4 +1,4 @@
-import fuzzysort from "fuzzysort";
+import Fuse from "fuse.js";
 import { Platform } from "react-native";
 import WiFiManager from "react-native-wifi-reborn";
 
@@ -113,28 +113,28 @@ export const scanWiFiNetworks = async (): Promise<WiFiNetwork[]> => {
   }
 };
 
-// Find the best match for a WiFi name in the list of available networks
-export const findBestMatch = (
+// Get networks sorted by fuzzy match similarity to the target SSID
+export const getSortedNetworksByFuzzyMatch = (
   targetSSID: string,
   networks: WiFiNetwork[]
-): WiFiNetwork | null => {
-  if (!targetSSID || networks.length === 0) return null;
+): WiFiNetwork[] => {
+  if (!targetSSID || networks.length === 0) return [];
 
-  // Prepare networks for fuzzy search
-  const prepared = networks.map((network) => ({
-    original: network,
-    prepared: fuzzysort.prepare(network.SSID),
-  }));
+  // Configure Fuse.js options
+  const options = {
+    includeScore: true,
+    keys: ["SSID"],
+    threshold: 0.8, // Higher threshold allows more results
+  };
 
-  // Perform fuzzy search
-  const result = fuzzysort.go(targetSSID, prepared, { key: "prepared" });
+  // Create a new Fuse instance
+  const fuse = new Fuse(networks, options);
 
-  // Return the best match if it exists and has a reasonable score
-  if (result.length > 0 && result[0].score > -1000) {
-    return result[0].obj.original;
-  }
+  // Search for the target SSID
+  const results = fuse.search(targetSSID);
 
-  return null;
+  // Map results back to WiFiNetwork objects
+  return results.map((result) => result.item);
 };
 
 // Connect to a WiFi network

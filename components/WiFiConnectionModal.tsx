@@ -98,7 +98,6 @@ const WiFiConnectionModal: React.FC<WiFiConnectionModalProps> = ({
               onChangeText={setPassword}
               placeholder="Enter WiFi password"
               placeholderTextColor="#999"
-              secureTextEntry
               autoCapitalize="none"
               editable={!isConnecting}
             />

@@ -15,13 +15,14 @@ import {
 } from "react-native";
 import { recognizeTextFromImage } from "../utils/textRecognition";
 import {
-  findBestMatch,
+  getSortedNetworksByFuzzyMatch,
   parseWiFiQRCode,
   scanWiFiNetworks,
   WiFiCredentials,
   WiFiNetwork,
 } from "../utils/wifi";
 import WiFiConnectionModal from "./WiFiConnectionModal";
+import WiFiNetworkSelectionModal from "./WiFiNetworkSelectionModal";
 
 interface WiFiScannerProps {
   onPermissionsNeeded: () => void;
@@ -33,11 +34,14 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ onPermissionsNeeded }) => {
   const [isScanning, setIsScanning] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [availableNetworks, setAvailableNetworks] = useState<WiFiNetwork[]>([]);
-  const [matchedNetwork, setMatchedNetwork] = useState<WiFiNetwork | null>(
+  const [sortedNetworks, setSortedNetworks] = useState<WiFiNetwork[]>([]);
+  const [selectedNetwork, setSelectedNetwork] = useState<WiFiNetwork | null>(
     null
   );
   const [credentials, setCredentials] = useState<WiFiCredentials | null>(null);
   const [showConnectionModal, setShowConnectionModal] = useState(false);
+  const [showNetworkSelectionModal, setShowNetworkSelectionModal] =
+    useState(false);
   const [flashMode, setFlashMode] = useState<FlashMode>("off");
 
   const cameraRef = useRef<CameraView>(null);
@@ -145,24 +149,49 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ onPermissionsNeeded }) => {
     setCredentials(wifiCredentials);
 
     // Scan for WiFi networks if not already done
-    if (availableNetworks.length === 0) {
-      await scanWiFi();
+    let networksToUse = availableNetworks;
+    if (networksToUse.length === 0) {
+      try {
+        // Directly use the returned networks instead of relying on state update
+        networksToUse = await scanWiFiNetworks();
+        setAvailableNetworks(networksToUse);
+      } catch (error) {
+        console.error("Error scanning WiFi:", error);
+        Alert.alert("Error", "Failed to scan WiFi networks. Please try again.");
+        setIsProcessing(false);
+        return;
+      }
     }
 
-    // Find matching network
-    const matchedNet = findBestMatch(wifiCredentials.ssid, availableNetworks);
-    setMatchedNetwork(matchedNet);
+    // Sort networks by fuzzy match similarity using the local variable
+    const sorted = getSortedNetworksByFuzzyMatch(
+      wifiCredentials.ssid,
+      networksToUse
+    );
+    setSortedNetworks(sorted);
 
-    // Show connection modal
-    setShowConnectionModal(true);
+    // Show network selection modal
+    setShowNetworkSelectionModal(true);
     setIsProcessing(false);
+  };
+
+  const handleSelectNetwork = (network: WiFiNetwork) => {
+    setSelectedNetwork(network);
+    setShowNetworkSelectionModal(false);
+    setShowConnectionModal(true);
+  };
+
+  const handleCloseNetworkSelectionModal = () => {
+    setShowNetworkSelectionModal(false);
+    setScannedData(null);
+    setCredentials(null);
   };
 
   const handleCloseConnectionModal = () => {
     setShowConnectionModal(false);
     setScannedData(null);
     setCredentials(null);
-    setMatchedNetwork(null);
+    setSelectedNetwork(null);
   };
 
   if (hasPermission === null) {
@@ -237,11 +266,21 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ onPermissionsNeeded }) => {
         </View>
       )}
 
-      {showConnectionModal && credentials && (
+      {showNetworkSelectionModal && credentials && (
+        <WiFiNetworkSelectionModal
+          visible={showNetworkSelectionModal}
+          networks={sortedNetworks}
+          searchTerm={credentials.ssid}
+          onSelectNetwork={handleSelectNetwork}
+          onCancel={handleCloseNetworkSelectionModal}
+        />
+      )}
+
+      {showConnectionModal && credentials && selectedNetwork && (
         <WiFiConnectionModal
           visible={showConnectionModal}
           credentials={credentials}
-          matchedNetwork={matchedNetwork}
+          matchedNetwork={selectedNetwork}
           onClose={handleCloseConnectionModal}
         />
       )}

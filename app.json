@@ -10,14 +10,24 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yilinjuang.wify"
+      "bundleIdentifier": "com.yilinjuang.wify",
+      "infoPlist": {
+        "NSLocalNetworkUsageDescription": "This app requires access to the local network to scan and connect to WiFi networks."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.yilinjuang.wify"
+      "package": "com.yilinjuang.wify",
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_WIFI_STATE",
+        "CHANGE_WIFI_STATE"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -33,6 +43,25 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
+        }
+      ],
+      [
+        "react-native-wifi-reborn",
+        {
+          "fineLocationPermission": true
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to scan QR codes and recognize WiFi credentials.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "This app requires location access to scan for nearby WiFi networks."
         }
       ]
     ],

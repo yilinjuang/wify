@@ -48,20 +48,68 @@ export const parseWiFiQRCode = (data: string): WiFiCredentials | null => {
 export const extractWiFiFromText = (text: string): WiFiCredentials[] => {
   const results: WiFiCredentials[] = [];
 
-  // Common patterns for WiFi information
+  // Common patterns for WiFi information in multiple languages
   const ssidPatterns = [
+    // English
     /SSID\s*:?\s*(["']?)([^"'\n]+)\1/i,
     /Network\s*:?\s*(["']?)([^"'\n]+)\1/i,
     /WiFi\s*:?\s*(["']?)([^"'\n]+)\1/i,
     /Network name\s*:?\s*(["']?)([^"'\n]+)\1/i,
+    // Chinese
+    /网络\s*:?\s*(["']?)([^"'\n]+)\1/i, // Network
+    /网络名称\s*:?\s*(["']?)([^"'\n]+)\1/i, // Network name
+    /无线网络\s*:?\s*(["']?)([^"'\n]+)\1/i, // Wireless network
+    /名称\s*:?\s*(["']?)([^"'\n]+)\1/i, // Name
+    // Spanish
+    /Red\s*:?\s*(["']?)([^"'\n]+)\1/i, // Network
+    /Nombre de red\s*:?\s*(["']?)([^"'\n]+)\1/i, // Network name
+    // French
+    /Réseau\s*:?\s*(["']?)([^"'\n]+)\1/i, // Network
+    /Nom du réseau\s*:?\s*(["']?)([^"'\n]+)\1/i, // Network name
+    // German
+    /Netzwerk\s*:?\s*(["']?)([^"'\n]+)\1/i, // Network
+    /Netzwerkname\s*:?\s*(["']?)([^"'\n]+)\1/i, // Network name
+    // Japanese
+    /ネットワーク\s*:?\s*(["']?)([^"'\n]+)\1/i, // Network
+    /ネットワーク名\s*:?\s*(["']?)([^"'\n]+)\1/i, // Network name
+    // Korean
+    /네트워크\s*:?\s*(["']?)([^"'\n]+)\1/i, // Network
+    /네트워크 이름\s*:?\s*(["']?)([^"'\n]+)\1/i, // Network name
   ];
 
   const passwordPatterns = [
+    // English
     /Password\s*:?\s*(["']?)([^"'\n]+)\1/i,
     /Pass\s*:?\s*(["']?)([^"'\n]+)\1/i,
     /Passphrase\s*:?\s*(["']?)([^"'\n]+)\1/i,
     /Network key\s*:?\s*(["']?)([^"'\n]+)\1/i,
+    // Chinese
+    /密码\s*:?\s*(["']?)([^"'\n]+)\1/i, // Password
+    /密碼\s*:?\s*(["']?)([^"'\n]+)\1/i, // Password (Traditional)
+    /网络密码\s*:?\s*(["']?)([^"'\n]+)\1/i, // Network password
+    /无线密码\s*:?\s*(["']?)([^"'\n]+)\1/i, // Wireless password
+    /口令\s*:?\s*(["']?)([^"'\n]+)\1/i, // Passphrase
+    // Spanish
+    /Contraseña\s*:?\s*(["']?)([^"'\n]+)\1/i, // Password
+    /Clave\s*:?\s*(["']?)([^"'\n]+)\1/i, // Key/Password
+    /Clave de red\s*:?\s*(["']?)([^"'\n]+)\1/i, // Network key
+    // French
+    /Mot de passe\s*:?\s*(["']?)([^"'\n]+)\1/i, // Password
+    /Clé\s*:?\s*(["']?)([^"'\n]+)\1/i, // Key
+    /Clé réseau\s*:?\s*(["']?)([^"'\n]+)\1/i, // Network key
+    // German
+    /Passwort\s*:?\s*(["']?)([^"'\n]+)\1/i, // Password
+    /Kennwort\s*:?\s*(["']?)([^"'\n]+)\1/i, // Password
+    /Netzwerkschlüssel\s*:?\s*(["']?)([^"'\n]+)\1/i, // Network key
+    // Japanese
+    /パスワード\s*:?\s*(["']?)([^"'\n]+)\1/i, // Password
+    /暗号キー\s*:?\s*(["']?)([^"'\n]+)\1/i, // Encryption key
+    // Korean
+    /비밀번호\s*:?\s*(["']?)([^"'\n]+)\1/i, // Password
+    /네트워크 키\s*:?\s*(["']?)([^"'\n]+)\1/i, // Network key
   ];
+
+  console.log(text);
 
   // Try to find SSID
   let ssid = "";
@@ -89,6 +137,76 @@ export const extractWiFiFromText = (text: string): WiFiCredentials[] => {
       password,
       isWPA: true, // Assume WPA by default
     });
+  }
+
+  // Try to extract credentials from common formats without explicit labels
+  // This helps with formats like "Network: MyWiFi / Password: 12345"
+  if (results.length === 0) {
+    // Look for patterns like "something: value1 / something: value2"
+    const combinedPattern =
+      /([^:]+):\s*([^\/\n]+)(?:\s*\/\s*|\n)([^:]+):\s*([^\n]+)/i;
+    const match = text.match(combinedPattern);
+
+    if (match) {
+      const label1 = match[1].trim().toLowerCase();
+      const value1 = match[2].trim();
+      const label2 = match[3].trim().toLowerCase();
+      const value2 = match[4].trim();
+
+      // Determine which is SSID and which is password based on labels
+      let extractedSsid = "";
+      let extractedPassword = "";
+
+      // Check first pair
+      const ssidLabels = [
+        "ssid",
+        "network",
+        "wifi",
+        "name",
+        "网络",
+        "名称",
+        "red",
+        "réseau",
+        "netzwerk",
+        "ネットワーク",
+        "네트워크",
+      ];
+      const passwordLabels = [
+        "password",
+        "pass",
+        "key",
+        "密码",
+        "密碼",
+        "contraseña",
+        "clave",
+        "mot de passe",
+        "passwort",
+        "パスワード",
+        "비밀번호",
+      ];
+
+      if (ssidLabels.some((label) => label1.includes(label))) {
+        extractedSsid = value1;
+      } else if (passwordLabels.some((label) => label1.includes(label))) {
+        extractedPassword = value1;
+      }
+
+      // Check second pair
+      if (ssidLabels.some((label) => label2.includes(label))) {
+        extractedSsid = value2;
+      } else if (passwordLabels.some((label) => label2.includes(label))) {
+        extractedPassword = value2;
+      }
+
+      // If we found both SSID and password, add them to results
+      if (extractedSsid && extractedPassword) {
+        results.push({
+          ssid: extractedSsid,
+          password: extractedPassword,
+          isWPA: true,
+        });
+      }
+    }
   }
 
   return results;

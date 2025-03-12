@@ -25,7 +25,6 @@ export default function App() {
     anyPermanentlyDenied: false,
   });
   const [showPermissionsModal, setShowPermissionsModal] = useState(false);
-  const [appState, setAppState] = useState(AppState.currentState);
   const appStateRef = useRef(AppState.currentState);
   const [isReturningFromBackground, setIsReturningFromBackground] =
     useState(false);
@@ -62,7 +61,6 @@ export default function App() {
     }
 
     appStateRef.current = nextAppState;
-    setAppState(nextAppState);
   };
 
   const checkInitialPermissions = async () => {

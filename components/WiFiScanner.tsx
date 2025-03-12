@@ -12,7 +12,7 @@ import {
   View,
 } from "react-native";
 import { PermissionStatus } from "../utils/permissions";
-import { recognizeTextFromImage } from "../utils/textRecognition";
+import { recognizeWifiFromImage } from "../utils/textRecognition";
 import {
   getSortedNetworksByFuzzyMatch,
   parseWiFiQRCode,
@@ -180,11 +180,11 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ permissionStatus }) => {
     try {
       setIsProcessing(true);
       // Perform text recognition
-      const extractedCredentials = await recognizeTextFromImage(photo);
+      const extractedCredentials = await recognizeWifiFromImage(photo);
 
-      if (extractedCredentials.length > 0) {
-        // Use the first set of credentials found
-        processWiFiCredentials(extractedCredentials[0]);
+      if (extractedCredentials) {
+        // Use the credentials found
+        processWiFiCredentials(extractedCredentials);
       } else {
         Alert.alert(
           "No WiFi Information Found",

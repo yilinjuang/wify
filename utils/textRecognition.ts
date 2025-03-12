@@ -5,9 +5,9 @@ import { CameraCapturedPicture } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import { extractWiFiFromText, WiFiCredentials } from "./wifi";
 
-export const recognizeTextFromImage = async (
+export const recognizeWifiFromImage = async (
   photo: CameraCapturedPicture | ImagePicker.ImagePickerAsset
-): Promise<WiFiCredentials[]> => {
+): Promise<WiFiCredentials | null> => {
   try {
     const imageUri = photo.uri;
 
@@ -22,9 +22,16 @@ export const recognizeTextFromImage = async (
       TextRecognitionScript.KOREAN,
     ];
 
+    // Try each script type and collect results
     for (const scriptType of scriptTypes) {
       try {
         const result = await TextRecognition.recognize(imageUri, scriptType);
+        // Try to extract credentials from each recognition result individually
+        const credentials = extractWiFiFromText(result.text);
+        if (credentials) {
+          return credentials;
+        }
+        // Also add to combined text for a final attempt
         combinedText += result.text + "\n";
       } catch (e) {
         // If a specific script fails, just continue
@@ -32,21 +39,10 @@ export const recognizeTextFromImage = async (
       }
     }
 
-    // Extract WiFi credentials from the combined text
-    const credentials = extractWiFiFromText(combinedText);
-
-    // Remove duplicates
-    const uniqueCredentials = credentials.filter(
-      (cred, index, self) =>
-        index ===
-        self.findIndex(
-          (c) => c.ssid === cred.ssid && c.password === cred.password
-        )
-    );
-
-    return uniqueCredentials;
+    // As a fallback, try with the combined text
+    return extractWiFiFromText(combinedText);
   } catch (error) {
     console.error("Error recognizing text:", error);
-    return [];
+    return null;
   }
 };

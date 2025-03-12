@@ -45,9 +45,7 @@ export const parseWiFiQRCode = (data: string): WiFiCredentials | null => {
 };
 
 // Extract WiFi credentials from OCR text
-export const extractWiFiFromText = (text: string): WiFiCredentials[] => {
-  const results: WiFiCredentials[] = [];
-
+export const extractWiFiFromText = (text: string): WiFiCredentials | null => {
   // Common patterns for WiFi information in multiple languages
   const ssidPatterns = [
     // English
@@ -109,8 +107,6 @@ export const extractWiFiFromText = (text: string): WiFiCredentials[] => {
     /네트워크 키\s*:?\s*(["']?)([^"'\n]+)\1/i, // Network key
   ];
 
-  console.log(text);
-
   // Try to find SSID
   let ssid = "";
   for (const pattern of ssidPatterns) {
@@ -128,88 +124,85 @@ export const extractWiFiFromText = (text: string): WiFiCredentials[] => {
       const match = text.match(pattern);
       if (match && match[2]) {
         password = match[2].trim();
-        break;
+        return {
+          ssid,
+          password,
+          isWPA: true, // Assume WPA by default
+        };
       }
     }
-
-    results.push({
-      ssid,
-      password,
-      isWPA: true, // Assume WPA by default
-    });
   }
 
   // Try to extract credentials from common formats without explicit labels
   // This helps with formats like "Network: MyWiFi / Password: 12345"
-  if (results.length === 0) {
-    // Look for patterns like "something: value1 / something: value2"
-    const combinedPattern =
-      /([^:]+):\s*([^\/\n]+)(?:\s*\/\s*|\n)([^:]+):\s*([^\n]+)/i;
-    const match = text.match(combinedPattern);
+  // Look for patterns like "something: value1 / something: value2"
+  const combinedPattern =
+    /([^:]+):\s*([^\/\n]+)(?:\s*\/\s*|\n)([^:]+):\s*([^\n]+)/i;
+  const match = text.match(combinedPattern);
 
-    if (match) {
-      const label1 = match[1].trim().toLowerCase();
-      const value1 = match[2].trim();
-      const label2 = match[3].trim().toLowerCase();
-      const value2 = match[4].trim();
+  if (match) {
+    const label1 = match[1].trim().toLowerCase();
+    const value1 = match[2].trim();
+    const label2 = match[3].trim().toLowerCase();
+    const value2 = match[4].trim();
 
-      // Determine which is SSID and which is password based on labels
-      let extractedSsid = "";
-      let extractedPassword = "";
+    // Determine which is SSID and which is password based on labels
+    let extractedSsid = "";
+    let extractedPassword = "";
 
-      // Check first pair
-      const ssidLabels = [
-        "ssid",
-        "network",
-        "wifi",
-        "name",
-        "网络",
-        "名称",
-        "red",
-        "réseau",
-        "netzwerk",
-        "ネットワーク",
-        "네트워크",
-      ];
-      const passwordLabels = [
-        "password",
-        "pass",
-        "key",
-        "密码",
-        "密碼",
-        "contraseña",
-        "clave",
-        "mot de passe",
-        "passwort",
-        "パスワード",
-        "비밀번호",
-      ];
+    // Check first pair
+    const ssidLabels = [
+      "ssid",
+      "network",
+      "wifi",
+      "name",
+      "网络",
+      "名称",
+      "red",
+      "réseau",
+      "netzwerk",
+      "ネットワーク",
+      "네트워크",
+    ];
+    const passwordLabels = [
+      "password",
+      "pass",
+      "key",
+      "密码",
+      "密碼",
+      "contraseña",
+      "clave",
+      "mot de passe",
+      "passwort",
+      "パスワード",
+      "비밀번호",
+    ];
 
-      if (ssidLabels.some((label) => label1.includes(label))) {
-        extractedSsid = value1;
-      } else if (passwordLabels.some((label) => label1.includes(label))) {
-        extractedPassword = value1;
-      }
+    if (ssidLabels.some((label) => label1.includes(label))) {
+      extractedSsid = value1;
+    } else if (passwordLabels.some((label) => label1.includes(label))) {
+      extractedPassword = value1;
+    }
 
-      // Check second pair
-      if (ssidLabels.some((label) => label2.includes(label))) {
-        extractedSsid = value2;
-      } else if (passwordLabels.some((label) => label2.includes(label))) {
-        extractedPassword = value2;
-      }
+    // Check second pair
+    if (ssidLabels.some((label) => label2.includes(label))) {
+      extractedSsid = value2;
+    } else if (passwordLabels.some((label) => label2.includes(label))) {
+      extractedPassword = value2;
+    }
 
-      // If we found both SSID and password, add them to results
-      if (extractedSsid && extractedPassword) {
-        results.push({
-          ssid: extractedSsid,
-          password: extractedPassword,
-          isWPA: true,
-        });
-      }
+    // If we found both SSID and password, return them
+    if (extractedSsid && extractedPassword) {
+      return {
+        ssid: extractedSsid,
+        password: extractedPassword,
+        isWPA: true,
+      };
     }
   }
 
-  return results;
+  // If we couldn't find both SSID and password, return null
+  return null;
 };
 
 // Filter out hidden networks (those with empty or placeholder SSIDs)

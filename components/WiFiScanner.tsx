@@ -347,13 +347,14 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({
       <CameraView
         ref={cameraRef}
         style={styles.camera}
+        facing="back"
+        pictureSize="1080p"
         flash={flashMode}
         onBarcodeScanned={scannedData ? undefined : handleBarCodeScanned}
         barcodeScannerSettings={{
           barcodeTypes: ["qr"],
         }}
-        // Use active prop for iOS only
-        {...(Platform.OS === "ios" ? { active: !isAnyModalOpen } : {})}
+        active={!isAnyModalOpen}
       >
         <View style={styles.overlay}>
           <View style={styles.scanArea} />

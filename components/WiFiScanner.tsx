@@ -174,31 +174,28 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ onPermissionsNeeded }) => {
   const processWiFiCredentials = async (wifiCredentials: WiFiCredentials) => {
     setCredentials(wifiCredentials);
 
-    // Scan for WiFi networks if not already done
-    let networksToUse = availableNetworks;
-    if (networksToUse.length === 0) {
-      try {
-        // Directly use the returned networks instead of relying on state update
-        networksToUse = await scanWiFiNetworks();
-        setAvailableNetworks(networksToUse);
-      } catch (error) {
-        console.error("Error scanning WiFi:", error);
-        Alert.alert("Error", "Failed to scan WiFi networks. Please try again.");
-        setIsProcessing(false);
-        return;
-      }
+    // Always scan for WiFi networks to ensure fresh data
+    try {
+      setIsProcessing(true);
+      // Scan for networks and update state
+      const freshNetworks = await scanWiFiNetworks();
+      setAvailableNetworks(freshNetworks);
+
+      // Sort networks by fuzzy match similarity
+      const sorted = getSortedNetworksByFuzzyMatch(
+        wifiCredentials.ssid,
+        freshNetworks
+      );
+      setSortedNetworks(sorted);
+
+      // Show network selection modal
+      setShowNetworkSelectionModal(true);
+    } catch (error) {
+      console.error("Error scanning WiFi:", error);
+      Alert.alert("Error", "Failed to scan WiFi networks. Please try again.");
+    } finally {
+      setIsProcessing(false);
     }
-
-    // Sort networks by fuzzy match similarity using the local variable
-    const sorted = getSortedNetworksByFuzzyMatch(
-      wifiCredentials.ssid,
-      networksToUse
-    );
-    setSortedNetworks(sorted);
-
-    // Show network selection modal
-    setShowNetworkSelectionModal(true);
-    setIsProcessing(false);
   };
 
   const handleSelectNetwork = (network: WiFiNetwork) => {

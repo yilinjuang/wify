@@ -149,8 +149,8 @@ export const connectToWiFi = async (
       await WiFiManager.connectToProtectedSSID(
         ssid,
         password,
-        isWPA,
-        false // joinOnce parameter
+        false, // iOS only
+        false // Android only
       );
       return true;
     } else if (Platform.OS === "ios") {
@@ -158,7 +158,7 @@ export const connectToWiFi = async (
       await WiFiManager.connectToProtectedSSIDPrefix(
         ssid,
         password,
-        false // joinOnce parameter
+        !isWPA // iOS only
       );
       return true;
     }

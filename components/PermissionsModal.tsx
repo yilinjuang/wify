@@ -26,19 +26,24 @@ const PermissionsModal: React.FC<PermissionsModalProps> = ({
     Linking.openSettings();
   };
 
+  // Determine if we need to show the settings button instead of request button
+  const showSettingsInstead = permissionStatus.anyPermanentlyDenied;
+
   return (
     <Modal
       animationType="slide"
       transparent={true}
       visible={visible}
-      onRequestClose={onClose}
+      onRequestClose={() => {}}
+      hardwareAccelerated={true}
     >
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
           <Text style={styles.modalTitle}>Permissions Required</Text>
 
           <Text style={styles.modalText}>
-            This app needs the following permissions to function properly:
+            This app requires the following permissions to function. You cannot
+            use the app without granting these permissions:
           </Text>
 
           <View style={styles.permissionItem}>
@@ -50,6 +55,7 @@ const PermissionsModal: React.FC<PermissionsModalProps> = ({
               ]}
             >
               {permissionStatus.camera ? "Granted" : "Denied"}
+              {permissionStatus.cameraPermanentlyDenied ? " (Permanently)" : ""}
             </Text>
           </View>
 
@@ -62,6 +68,9 @@ const PermissionsModal: React.FC<PermissionsModalProps> = ({
               ]}
             >
               {permissionStatus.location ? "Granted" : "Denied"}
+              {permissionStatus.locationPermanentlyDenied
+                ? " (Permanently)"
+                : ""}
             </Text>
           </View>
 
@@ -73,26 +82,28 @@ const PermissionsModal: React.FC<PermissionsModalProps> = ({
             • Location permission is required to scan for nearby WiFi networks.
           </Text>
 
+          {showSettingsInstead && (
+            <Text style={[styles.explanationText, styles.warningText]}>
+              You have permanently denied some permissions. You must enable them
+              in your device settings to use this app.
+            </Text>
+          )}
+
           <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.button, styles.buttonRequest]}
-              onPress={onRequestPermissions}
-            >
-              <Text style={styles.buttonText}>Request Permissions</Text>
-            </TouchableOpacity>
+            {!showSettingsInstead ? (
+              <TouchableOpacity
+                style={[styles.button, styles.buttonRequest]}
+                onPress={onRequestPermissions}
+              >
+                <Text style={styles.buttonText}>Request Permissions</Text>
+              </TouchableOpacity>
+            ) : null}
 
             <TouchableOpacity
               style={[styles.button, styles.buttonSettings]}
               onPress={openSettings}
             >
               <Text style={styles.buttonText}>Open Settings</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.button, styles.buttonCancel]}
-              onPress={onClose}
-            >
-              <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -152,6 +163,14 @@ const styles = StyleSheet.create({
     textAlign: "left",
     width: "100%",
   },
+  warningText: {
+    color: "#F44336",
+    fontWeight: "bold",
+    marginTop: 15,
+    marginBottom: 5,
+    fontSize: 16,
+    textAlign: "center",
+  },
   buttonContainer: {
     marginTop: 20,
     width: "100%",
@@ -167,9 +186,6 @@ const styles = StyleSheet.create({
   },
   buttonSettings: {
     backgroundColor: "#FF9800",
-  },
-  buttonCancel: {
-    backgroundColor: "#757575",
   },
   buttonText: {
     color: "white",

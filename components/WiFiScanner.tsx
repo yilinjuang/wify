@@ -1,15 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
-import {
-  Camera,
-  CameraCapturedPicture,
-  CameraView,
-  FlashMode,
-} from "expo-camera";
+import { CameraCapturedPicture, CameraView, FlashMode } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   Platform,
   StyleSheet,
   Text,
@@ -29,10 +25,25 @@ import WiFiNetworkSelectionModal from "./WiFiNetworkSelectionModal";
 
 interface WiFiScannerProps {
   onPermissionsNeeded: () => void;
+  permissionStatus?: {
+    camera: boolean;
+    location: boolean;
+    allGranted: boolean;
+    cameraPermanentlyDenied?: boolean;
+    locationPermanentlyDenied?: boolean;
+    anyPermanentlyDenied?: boolean;
+  };
+  permissionsModalVisible?: boolean;
 }
 
-const WiFiScanner: React.FC<WiFiScannerProps> = ({ onPermissionsNeeded }) => {
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+const WiFiScanner: React.FC<WiFiScannerProps> = ({
+  onPermissionsNeeded,
+  permissionStatus,
+  permissionsModalVisible = false,
+}) => {
+  const [hasPermission, setHasPermission] = useState<boolean | null>(
+    permissionStatus?.camera ?? null
+  );
   const [scannedData, setScannedData] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [availableNetworks, setAvailableNetworks] = useState<WiFiNetwork[]>([]);
@@ -50,16 +61,34 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ onPermissionsNeeded }) => {
 
   const cameraRef = useRef<CameraView>(null);
 
+  // Update hasPermission when permissionStatus changes
   useEffect(() => {
-    (async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === "granted");
+    if (permissionStatus) {
+      const wasPermissionGranted = hasPermission;
+      setHasPermission(permissionStatus.camera);
 
-      if (status !== "granted") {
-        onPermissionsNeeded();
+      // Log when permissions are granted
+      if (permissionStatus.camera && permissionStatus.location) {
+        console.log("All permissions granted, camera can now be used");
+
+        // Reset camera if permission was just granted
+        if (
+          !wasPermissionGranted &&
+          permissionStatus.camera &&
+          cameraRef.current
+        ) {
+          // For Android, we need to manually resume the camera preview
+          if (Platform.OS === "android") {
+            setTimeout(() => {
+              if (cameraRef.current) {
+                cameraRef.current.resumePreview();
+              }
+            }, 500); // Small delay to ensure camera is ready
+          }
+        }
       }
-    })();
-  }, []);
+    }
+  }, [permissionStatus]);
 
   // Effect to track when any modal is open and control camera preview
   useEffect(() => {
@@ -67,7 +96,8 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ onPermissionsNeeded }) => {
       showConnectionModal ||
       showNetworkSelectionModal ||
       isProcessing ||
-      isImagePickerActive;
+      isImagePickerActive ||
+      permissionsModalVisible;
 
     setIsAnyModalOpen(modalOpen);
 
@@ -81,11 +111,17 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ onPermissionsNeeded }) => {
         cameraRef.current.resumePreview();
       }
     }
+
+    // Log when camera is paused due to permissions modal
+    if (permissionsModalVisible) {
+      console.log("Camera paused due to permissions modal being shown");
+    }
   }, [
     showConnectionModal,
     showNetworkSelectionModal,
     isProcessing,
     isImagePickerActive,
+    permissionsModalVisible,
   ]);
 
   // Add cleanup effect for image picker
@@ -112,11 +148,23 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ onPermissionsNeeded }) => {
         await ImagePicker.requestMediaLibraryPermissionsAsync();
 
       if (!permissionResult.granted) {
-        Alert.alert(
-          "Permission Required",
-          "Photo library access is needed to select photos.",
-          [{ text: "OK" }]
-        );
+        // Check if permission is permanently denied
+        if (permissionResult.canAskAgain === false) {
+          Alert.alert(
+            "Permission Required",
+            "Photo library access has been permanently denied. Please enable it in your device settings.",
+            [
+              { text: "Cancel", style: "cancel" },
+              { text: "Open Settings", onPress: () => Linking.openSettings() },
+            ]
+          );
+        } else {
+          Alert.alert(
+            "Permission Required",
+            "Photo library access is needed to select photos.",
+            [{ text: "OK" }]
+          );
+        }
         setIsImagePickerActive(false);
         return;
       }
@@ -266,21 +314,38 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ onPermissionsNeeded }) => {
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color="#FFFFFF" />
-        <Text style={styles.text}>Requesting camera permission...</Text>
+        <Text style={styles.text}>Checking camera permission...</Text>
       </View>
     );
   }
 
   if (hasPermission === false) {
+    const isPermanentlyDenied = permissionStatus?.cameraPermanentlyDenied;
+
     return (
       <View style={styles.container}>
         <Text style={styles.text}>No access to camera</Text>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={onPermissionsNeeded}
-        >
-          <Text style={styles.buttonText}>Grant Permissions</Text>
-        </TouchableOpacity>
+        {isPermanentlyDenied ? (
+          <>
+            <Text style={styles.warningText}>
+              Camera permission has been permanently denied. Please enable it in
+              your device settings.
+            </Text>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => Linking.openSettings()}
+            >
+              <Text style={styles.buttonText}>Open Settings</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={onPermissionsNeeded}
+          >
+            <Text style={styles.buttonText}>Grant Permissions</Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   }
@@ -324,6 +389,13 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ onPermissionsNeeded }) => {
           </TouchableOpacity>
         </View>
       </CameraView>
+
+      {permissionsModalVisible && (
+        <View style={styles.permissionsOverlay}>
+          <ActivityIndicator size="large" color="#FFFFFF" />
+          <Text style={styles.text}>Waiting for permissions...</Text>
+        </View>
+      )}
 
       {isProcessing && (
         <View style={styles.processingOverlay}>
@@ -442,6 +514,26 @@ const styles = StyleSheet.create({
   },
   spacer: {
     width: 54, // Same width as iconButton to maintain layout balance
+  },
+  warningText: {
+    color: "#F44336",
+    fontSize: 16,
+    marginTop: 10,
+    marginBottom: 10,
+    textAlign: "center",
+    paddingHorizontal: 20,
+  },
+  placeholderContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  permissionsOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
   },
 });
 

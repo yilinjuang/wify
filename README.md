@@ -1,4 +1,4 @@
-# WiFi Scanner App
+# Wify
 
 A React Native application that scans WiFi QR codes and text to extract WiFi credentials, matches them with nearby networks, and connects to them.
 

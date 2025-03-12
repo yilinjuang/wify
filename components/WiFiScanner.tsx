@@ -31,7 +31,6 @@ interface WiFiScannerProps {
 const WiFiScanner: React.FC<WiFiScannerProps> = ({ onPermissionsNeeded }) => {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scannedData, setScannedData] = useState<string | null>(null);
-  const [isScanning, setIsScanning] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [availableNetworks, setAvailableNetworks] = useState<WiFiNetwork[]>([]);
   const [sortedNetworks, setSortedNetworks] = useState<WiFiNetwork[]>([]);
@@ -59,20 +58,6 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ onPermissionsNeeded }) => {
 
   const toggleFlash = () => {
     setFlashMode(flashMode === "off" ? "on" : "off");
-  };
-
-  const scanWiFi = async () => {
-    setIsScanning(true);
-    try {
-      const networks = await scanWiFiNetworks();
-      setAvailableNetworks(networks);
-      console.log("Available networks:", networks);
-    } catch (error) {
-      console.error("Error scanning WiFi:", error);
-      Alert.alert("Error", "Failed to scan WiFi networks. Please try again.");
-    } finally {
-      setIsScanning(false);
-    }
   };
 
   const handleBarCodeScanned = ({
@@ -247,15 +232,7 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ onPermissionsNeeded }) => {
             <View style={styles.captureButtonInner} />
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.controlButton}
-            onPress={scanWiFi}
-            disabled={isScanning}
-          >
-            <Text style={styles.buttonText}>
-              {isScanning ? "Scanning..." : "Scan WiFi"}
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.spacer} />
         </View>
       </CameraView>
 
@@ -366,6 +343,9 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
     margin: 20,
+  },
+  spacer: {
+    width: 100, // Same width as controlButton to maintain layout balance
   },
 });
 

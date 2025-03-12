@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import {
   Camera,
   CameraCapturedPicture,
@@ -218,10 +219,12 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ onPermissionsNeeded }) => {
         </View>
 
         <View style={styles.controlsContainer}>
-          <TouchableOpacity style={styles.controlButton} onPress={toggleFlash}>
-            <Text style={styles.buttonText}>
-              {flashMode === "on" ? "Flash Off" : "Flash On"}
-            </Text>
+          <TouchableOpacity style={styles.iconButton} onPress={toggleFlash}>
+            <Ionicons
+              name={flashMode === "on" ? "flash" : "flash-off"}
+              size={24}
+              color="#FFFFFF"
+            />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -303,6 +306,13 @@ const styles = StyleSheet.create({
     width: 100,
     alignItems: "center",
   },
+  iconButton: {
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    padding: 15,
+    borderRadius: 50,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   captureButton: {
     width: 70,
     height: 70,
@@ -345,7 +355,7 @@ const styles = StyleSheet.create({
     margin: 20,
   },
   spacer: {
-    width: 100, // Same width as controlButton to maintain layout balance
+    width: 54, // Same width as iconButton to maintain layout balance
   },
 });
 

@@ -6,19 +6,24 @@ A React Native application that scans WiFi QR codes and text to extract WiFi cre
 
 - **QR Code Scanning**: Scan WiFi QR codes to extract network name and password.
 - **Text Recognition (OCR)**: Extract WiFi credentials from text in images.
+- **Image Picker**: Select images from gallery for WiFi credential extraction.
 - **WiFi Network Scanning**: Scan for nearby WiFi networks.
-- **Fuzzy Matching**: Match extracted WiFi names with available networks.
-- **WiFi Connection**: Connect to matched WiFi networks.
-- **Permission Handling**: Proper handling of camera and location permissions.
+- **Fuzzy Matching**: Match extracted WiFi names with available networks using Fuse.js.
+- **WiFi Connection**: Connect to matched WiFi networks using react-native-wifi-reborn.
+- **Permission Handling**: Proper handling of camera and location permissions with user-friendly prompts.
+- **Multi-language Support**: OCR recognition for Latin, Chinese, Japanese, and Korean scripts.
 
 ## Technology Stack
 
 - **Framework**: React Native with Expo
+- **Router**: Expo Router
 - **WiFi Management**: react-native-wifi-reborn
 - **Camera & QR Scanning**: expo-camera
 - **Text Recognition**: @react-native-ml-kit/text-recognition
+- **Image Picker**: expo-image-picker
 - **Location Services**: expo-location
-- **Fuzzy Search**: fuzzysort
+- **Fuzzy Search**: Fuse.js
+- **Icons**: @expo/vector-icons
 
 ## Installation
 
@@ -41,15 +46,25 @@ A React Native application that scans WiFi QR codes and text to extract WiFi cre
    npm start
    ```
 
-4. Follow the Expo CLI instructions to run on a device or emulator.
+4. For development on physical devices:
+
+   ```bash
+   # For Android
+   npm run android
+
+   # For iOS
+   npm run ios
+   ```
 
 ## Usage
 
 1. Launch the app and grant the required permissions (camera and location).
 2. Point the camera at a WiFi QR code or text containing WiFi credentials.
-3. The app will scan for nearby WiFi networks and match them with the extracted credentials.
-4. Confirm the connection and enter/edit the password if needed.
-5. Connect to the WiFi network.
+3. Alternatively, tap the gallery icon to select an image containing WiFi information.
+4. The app will scan for nearby WiFi networks and match them with the extracted credentials.
+5. If multiple networks match, you can select the correct one from a list.
+6. Confirm the connection and edit the password if needed.
+7. Connect to the WiFi network.
 
 ## Permissions
 
@@ -57,21 +72,31 @@ The app requires the following permissions:
 
 - **Camera**: To scan QR codes and capture images for text recognition.
 - **Location**: Required by the WiFi scanning functionality to discover nearby networks.
+- **Photo Library**: To access images for WiFi credential extraction.
 
-## Development
+## Project Structure
 
-### Project Structure
-
-- `app/`: Main application code
-  - `components/`: React components
-  - `utils/`: Utility functions for permissions, WiFi operations, and text recognition
+- `app/`: Main application code using Expo Router
+  - `index.tsx`: Main app component
+  - `_layout.tsx`: App layout configuration
+- `components/`: React components
+  - `WiFiScanner.tsx`: Main component for camera and QR code scanning
+  - `WiFiConnectionModal.tsx`: Modal for connecting to WiFi networks
+  - `PermissionsModal.tsx`: Modal for handling permission requests
+  - `WiFiNetworkSelectionModal.tsx`: Modal for selecting from multiple matching networks
+- `utils/`: Utility functions
+  - `wifi.ts`: WiFi operations including scanning, connecting, and parsing
+  - `textRecognition.ts`: OCR functionality for extracting WiFi credentials from images
+  - `permissions.ts`: Permission handling utilities
 - `assets/`: Images and other static assets
 
-### Key Components
+## Key Features Implementation
 
-- `WiFiScanner`: Main component for camera and QR code scanning
-- `WiFiConnectionModal`: Modal for connecting to WiFi networks
-- `PermissionsModal`: Modal for handling permission requests
+- **WiFi QR Code Parsing**: Extracts SSID, password, and security type from standard WiFi QR codes.
+- **Text Recognition**: Uses ML Kit to recognize text in multiple languages and extract WiFi credentials.
+- **Fuzzy Matching**: Uses Fuse.js to match extracted WiFi names with available networks, even with slight differences.
+- **Permission Handling**: Gracefully handles permission requests and provides guidance when permissions are denied.
+- **Background App State**: Rechecks permissions when the app returns from background.
 
 ## License
 
@@ -118,12 +143,12 @@ Features & Functionality
   - Display an editable field for the password:
   - If one password is detected, pre-fill it.
   - If multiple passwords are detected, allow selection from a dropdown/list.
-  - Show “Connect” and “Cancel” buttons:
+  - Show "Connect" and "Cancel" buttons:
   - Connect → Uses react-native-wifi-reborn to request a WiFi connection.
   - Cancel → Returns the user to the camera scanner.
 
 4. Connection Feedback
-  - Success: Show a “Connected” alert.
+  - Success: Show a "Connected" alert.
   - Failure: Show an alert with:
   - The reason for failure (e.g., incorrect password, weak signal, permission denied).
   - An option to retry or manually enter WiFi details.
@@ -138,6 +163,6 @@ Implementation Considerations
   - Extract and clean up recognized text before attempting fuzzy matching.
   - UI/UX Enhancements:
   - Show a loading state when scanning for networks.
-  - Allow manual entry if scanning fails or a WiFi name isn’t found.
+  - Allow manual entry if scanning fails or a WiFi name isn't found.
   - Offer a retry button for rescanning.
 ```

@@ -4,8 +4,7 @@
     "slug": "wify",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "wify",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -13,13 +12,14 @@
       "bundleIdentifier": "com.yilinjuang.wify",
       "infoPlist": {
         "NSLocalNetworkUsageDescription": "This app requires access to the local network to scan and connect to WiFi networks."
+      },
+      "icon": {
+        "dark": "./assets/images/ios-dark.png",
+        "light": "./assets/images/ios-light.png",
+        "tinted": "./assets/images/ios-tinted.png"
       }
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
       "package": "com.yilinjuang.wify",
       "permissions": [
         "CAMERA",
@@ -27,22 +27,24 @@
         "ACCESS_COARSE_LOCATION",
         "ACCESS_WIFI_STATE",
         "CHANGE_WIFI_STATE"
-      ]
-    },
-    "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#232323"
+      }
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#232323",
+          "image": "./assets/images/splash-icon-light.png",
+          "dark": {
+            "image": "./assets/images/splash-icon-dark.png",
+            "backgroundColor": "#000000"
+          },
+          "imageWidth": 200
         }
       ],
       [

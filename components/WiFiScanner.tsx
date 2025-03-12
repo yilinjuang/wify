@@ -6,12 +6,12 @@ import {
   ActivityIndicator,
   Alert,
   Linking,
-  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { PermissionStatus } from "../utils/permissions";
 import { recognizeTextFromImage } from "../utils/textRecognition";
 import {
   getSortedNetworksByFuzzyMatch,
@@ -24,29 +24,12 @@ import WiFiConnectionModal from "./WiFiConnectionModal";
 import WiFiNetworkSelectionModal from "./WiFiNetworkSelectionModal";
 
 interface WiFiScannerProps {
-  onPermissionsNeeded: () => void;
-  permissionStatus?: {
-    camera: boolean;
-    location: boolean;
-    allGranted: boolean;
-    cameraPermanentlyDenied?: boolean;
-    locationPermanentlyDenied?: boolean;
-    anyPermanentlyDenied?: boolean;
-  };
-  permissionsModalVisible?: boolean;
+  permissionStatus?: PermissionStatus;
 }
 
-const WiFiScanner: React.FC<WiFiScannerProps> = ({
-  onPermissionsNeeded,
-  permissionStatus,
-  permissionsModalVisible = false,
-}) => {
-  const [hasPermission, setHasPermission] = useState<boolean | null>(
-    permissionStatus?.camera ?? null
-  );
+const WiFiScanner: React.FC<WiFiScannerProps> = ({ permissionStatus }) => {
   const [scannedData, setScannedData] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [availableNetworks, setAvailableNetworks] = useState<WiFiNetwork[]>([]);
   const [sortedNetworks, setSortedNetworks] = useState<WiFiNetwork[]>([]);
   const [selectedNetwork, setSelectedNetwork] = useState<WiFiNetwork | null>(
     null
@@ -56,82 +39,41 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({
   const [showNetworkSelectionModal, setShowNetworkSelectionModal] =
     useState(false);
   const [flashMode, setFlashMode] = useState<FlashMode>("off");
-  const [isAnyModalOpen, setIsAnyModalOpen] = useState(false);
+  const [isCameraActive, setIsCameraActive] = useState(false);
   const [isImagePickerActive, setIsImagePickerActive] = useState(false);
 
   const cameraRef = useRef<CameraView>(null);
 
-  // Update hasPermission when permissionStatus changes
   useEffect(() => {
-    if (permissionStatus) {
-      const wasPermissionGranted = hasPermission;
-      setHasPermission(permissionStatus.camera);
-
-      if (permissionStatus.camera && permissionStatus.location) {
-        // Reset camera if permission was just granted
-        if (
-          !wasPermissionGranted &&
-          permissionStatus.camera &&
-          cameraRef.current
-        ) {
-          // For Android, we need to manually resume the camera preview
-          if (Platform.OS === "android") {
-            setTimeout(() => {
-              if (cameraRef.current) {
-                cameraRef.current.resumePreview();
-              }
-            }, 500); // Small delay to ensure camera is ready
-          }
-        }
-      }
+    if (!cameraRef.current || isProcessing) {
+      return;
     }
-  }, [permissionStatus]);
 
-  // Effect to track when any modal is open and control camera preview
-  useEffect(() => {
     const modalOpen =
-      showConnectionModal ||
-      showNetworkSelectionModal ||
-      isProcessing ||
-      isImagePickerActive ||
-      permissionsModalVisible;
+      showConnectionModal || showNetworkSelectionModal || isImagePickerActive;
 
-    setIsAnyModalOpen(modalOpen);
-
-    // For Android, we need to manually pause/resume the camera preview
-    if (Platform.OS === "android" && cameraRef.current) {
-      if (modalOpen) {
-        // Pause camera on Android when modal opens
-        cameraRef.current.pausePreview();
-      } else {
-        // Resume camera on Android when modal closes
-        cameraRef.current.resumePreview();
-      }
+    if (modalOpen && isCameraActive) {
+      cameraRef.current.pausePreview();
+      setIsCameraActive(false);
+    } else if (!modalOpen && !isCameraActive) {
+      cameraRef.current.resumePreview();
+      setIsCameraActive(true);
     }
   }, [
     showConnectionModal,
     showNetworkSelectionModal,
     isProcessing,
     isImagePickerActive,
-    permissionsModalVisible,
   ]);
-
-  // Add cleanup effect for image picker
-  useEffect(() => {
-    return () => {
-      // Reset image picker state if component unmounts while picker is active
-      if (isImagePickerActive) {
-        setIsImagePickerActive(false);
-      }
-    };
-  }, [isImagePickerActive]);
 
   const toggleFlash = () => {
     setFlashMode(flashMode === "off" ? "on" : "off");
   };
 
   const openImagePicker = async () => {
-    if (isProcessing) return;
+    if (isProcessing) {
+      return;
+    }
 
     try {
       setIsImagePickerActive(true);
@@ -190,7 +132,9 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({
     type: string;
     data: string;
   }) => {
-    if (isProcessing) return;
+    if (isProcessing) {
+      return;
+    }
 
     setIsProcessing(true);
     setScannedData(data);
@@ -264,7 +208,6 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({
       setIsProcessing(true);
       // Scan for networks and update state
       const freshNetworks = await scanWiFiNetworks();
-      setAvailableNetworks(freshNetworks);
 
       // Sort networks by fuzzy match similarity
       const sorted = getSortedNetworksByFuzzyMatch(
@@ -302,44 +245,8 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({
     setSelectedNetwork(null);
   };
 
-  if (hasPermission === null) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#FFFFFF" />
-        <Text style={styles.text}>Checking camera permission...</Text>
-      </View>
-    );
-  }
-
-  if (hasPermission === false) {
-    const isPermanentlyDenied = permissionStatus?.cameraPermanentlyDenied;
-
-    return (
-      <View style={styles.container}>
-        <Text style={styles.text}>No access to camera</Text>
-        {isPermanentlyDenied ? (
-          <>
-            <Text style={styles.warningText}>
-              Camera permission has been permanently denied. Please enable it in
-              your device settings.
-            </Text>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => Linking.openSettings()}
-            >
-              <Text style={styles.buttonText}>Open Settings</Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={onPermissionsNeeded}
-          >
-            <Text style={styles.buttonText}>Grant Permissions</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    );
+  if (!permissionStatus?.allGranted) {
+    return null;
   }
 
   return (
@@ -347,14 +254,12 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({
       <CameraView
         ref={cameraRef}
         style={styles.camera}
-        facing="back"
-        pictureSize="1080p"
         flash={flashMode}
+        active={!isCameraActive}
         onBarcodeScanned={scannedData ? undefined : handleBarCodeScanned}
         barcodeScannerSettings={{
           barcodeTypes: ["qr"],
         }}
-        active={!isAnyModalOpen}
       >
         <View style={styles.overlay}>
           <View style={styles.scanArea} />
@@ -382,13 +287,6 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({
           </TouchableOpacity>
         </View>
       </CameraView>
-
-      {permissionsModalVisible && (
-        <View style={styles.permissionsOverlay}>
-          <ActivityIndicator size="large" color="#FFFFFF" />
-          <Text style={styles.text}>Waiting for permissions...</Text>
-        </View>
-      )}
 
       {isProcessing && (
         <View style={styles.processingOverlay}>

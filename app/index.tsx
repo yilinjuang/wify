@@ -99,19 +99,11 @@ export default function App() {
     }
   };
 
-  const handlePermissionsNeeded = () => {
-    setShowPermissionsModal(true);
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#000000" />
 
-      <WiFiScanner
-        onPermissionsNeeded={handlePermissionsNeeded}
-        permissionStatus={permissionStatus}
-        permissionsModalVisible={showPermissionsModal}
-      />
+      <WiFiScanner permissionStatus={permissionStatus} />
 
       <PermissionsModal
         visible={showPermissionsModal}

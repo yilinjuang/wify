@@ -213,7 +213,7 @@ export const connectToWiFi = async (
         {
           ssid,
           password,
-          isAppInteractionRequired: true,
+          isAppInteractionRequired: false,
         },
       ]);
       console.log("success", success);

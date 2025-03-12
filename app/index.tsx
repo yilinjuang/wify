@@ -55,7 +55,6 @@ export default function App() {
       (previousAppState === "background" || previousAppState === "inactive") &&
       nextAppState === "active"
     ) {
-      console.log("App has come to the foreground, checking permissions again");
       setIsReturningFromBackground(true);
       await checkInitialPermissions();
     } else {

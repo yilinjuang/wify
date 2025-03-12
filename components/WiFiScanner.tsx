@@ -67,10 +67,7 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({
       const wasPermissionGranted = hasPermission;
       setHasPermission(permissionStatus.camera);
 
-      // Log when permissions are granted
       if (permissionStatus.camera && permissionStatus.location) {
-        console.log("All permissions granted, camera can now be used");
-
         // Reset camera if permission was just granted
         if (
           !wasPermissionGranted &&
@@ -110,11 +107,6 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({
         // Resume camera on Android when modal closes
         cameraRef.current.resumePreview();
       }
-    }
-
-    // Log when camera is paused due to permissions modal
-    if (permissionsModalVisible) {
-      console.log("Camera paused due to permissions modal being shown");
     }
   }, [
     showConnectionModal,

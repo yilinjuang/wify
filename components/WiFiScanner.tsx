@@ -5,6 +5,7 @@ import {
   CameraView,
   FlashMode,
 } from "expo-camera";
+import * as ImagePicker from "expo-image-picker";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -61,6 +62,42 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ onPermissionsNeeded }) => {
     setFlashMode(flashMode === "off" ? "on" : "off");
   };
 
+  const openImagePicker = async () => {
+    if (isProcessing) return;
+
+    try {
+      // Request permission first
+      const permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permissionResult.granted) {
+        Alert.alert(
+          "Permission Required",
+          "Photo library access is needed to select photos.",
+          [{ text: "OK" }]
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        quality: 1,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const selectedImage = result.assets[0];
+        await processImage(selectedImage);
+      }
+    } catch (error) {
+      console.error("Error picking image:", error);
+      Alert.alert(
+        "Error",
+        "Failed to pick image from library. Please try again."
+      );
+    }
+  };
+
   const handleBarCodeScanned = ({
     type,
     data,
@@ -108,8 +145,11 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ onPermissionsNeeded }) => {
     }
   };
 
-  const processImage = async (photo: CameraCapturedPicture) => {
+  const processImage = async (
+    photo: CameraCapturedPicture | ImagePicker.ImagePickerAsset
+  ) => {
     try {
+      setIsProcessing(true);
       // Perform text recognition
       const extractedCredentials = await recognizeTextFromImage(photo);
 
@@ -235,7 +275,9 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ onPermissionsNeeded }) => {
             <View style={styles.captureButtonInner} />
           </TouchableOpacity>
 
-          <View style={styles.spacer} />
+          <TouchableOpacity style={styles.iconButton} onPress={openImagePicker}>
+            <Ionicons name="images" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
         </View>
       </CameraView>
 

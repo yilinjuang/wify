@@ -1,13 +1,15 @@
 import TextRecognition from "@react-native-ml-kit/text-recognition";
 import { CameraCapturedPicture } from "expo-camera";
+import * as ImagePicker from "expo-image-picker";
 import { extractWiFiFromText, WiFiCredentials } from "./wifi";
 
 export const recognizeTextFromImage = async (
-  photo: CameraCapturedPicture
+  photo: CameraCapturedPicture | ImagePicker.ImagePickerAsset
 ): Promise<WiFiCredentials[]> => {
   try {
     // Perform text recognition on the captured image
-    const result = await TextRecognition.recognize(photo.uri);
+    const imageUri = photo.uri;
+    const result = await TextRecognition.recognize(imageUri);
 
     // Extract the recognized text
     const recognizedText = result.text;

@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { WiFiNetwork } from "../utils/wifi";
+import { WiFiNetwork, getSecurityProtocol } from "../utils/wifi";
 
 interface WiFiNetworkSelectionModalProps {
   visible: boolean;
@@ -35,6 +35,13 @@ const WiFiNetworkSelectionModal: React.FC<WiFiNetworkSelectionModalProps> = ({
       return "●○○○";
     };
 
+    // Get security protocol using the helper function
+    const securityProtocol = getSecurityProtocol(item.capabilities);
+    const securityIcon =
+      securityProtocol !== "Unsecured" && securityProtocol !== "Unknown"
+        ? "🔒 "
+        : "";
+
     return (
       <TouchableOpacity
         style={styles.networkItem}
@@ -42,11 +49,14 @@ const WiFiNetworkSelectionModal: React.FC<WiFiNetworkSelectionModalProps> = ({
       >
         <View style={styles.networkInfo}>
           <Text style={styles.networkName}>{item.SSID}</Text>
-          {item.capabilities && (
-            <Text style={styles.securityInfo}>
-              {item.capabilities.includes("WPA") ? "🔒 Secured" : "Unsecured"}
-            </Text>
-          )}
+          <Text
+            style={[
+              styles.securityInfo,
+              securityProtocol === "Unsecured" ? styles.unsecuredText : null,
+            ]}
+          >
+            {securityIcon + securityProtocol}
+          </Text>
         </View>
         <Text style={styles.signalStrength}>
           {getSignalStrength(item.level)}
@@ -148,13 +158,18 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   securityInfo: {
-    fontSize: 12,
-    color: "#BBBBBB",
+    fontSize: 13,
+    color: "#4CAF50",
+    fontWeight: "500",
+  },
+  unsecuredText: {
+    color: "#FF9800",
   },
   signalStrength: {
     fontSize: 14,
     color: "#2196F3",
     fontFamily: "monospace",
+    marginLeft: 10,
   },
   emptyContainer: {
     padding: 30,

@@ -94,19 +94,66 @@ export const extractWiFiFromText = (text: string): WiFiCredentials[] => {
   return results;
 };
 
+// Filter out hidden networks (those with empty or placeholder SSIDs)
+export const filterOutHiddenNetworks = (
+  networks: WiFiNetwork[]
+): WiFiNetwork[] => {
+  if (!networks || networks.length === 0) return [];
+
+  return networks.filter((network) => {
+    // Keep only networks with valid SSIDs (not empty, not placeholders)
+    return (
+      network.SSID &&
+      network.SSID.trim() !== "" &&
+      network.SSID !== "<hidden>" &&
+      network.SSID !== "<unknown>"
+    );
+  });
+};
+
+// Filter out unsecured WiFi networks
+export const filterOutUnsecuredNetworks = (
+  networks: WiFiNetwork[]
+): WiFiNetwork[] => {
+  if (!networks || networks.length === 0) return [];
+
+  return networks.filter((network) => {
+    // Only keep networks with security capabilities
+    // This checks if capabilities string contains WEP, WPA, WPA2, or WPA3
+    return (
+      network.capabilities &&
+      (network.capabilities.includes("WEP") ||
+        network.capabilities.includes("WPA") ||
+        network.capabilities.includes("PSK") ||
+        network.capabilities.includes("EAP"))
+    );
+  });
+};
+
 // Scan for available WiFi networks
 export const scanWiFiNetworks = async (): Promise<WiFiNetwork[]> => {
   try {
+    let networks: WiFiNetwork[] = [];
+
     // On iOS, we need to load the list differently
     if (Platform.OS === "ios") {
       // iOS doesn't support scanning for networks directly
       // We can only get the current connected network
       const ssid = await WiFiManager.getCurrentWifiSSID();
-      return ssid ? [{ SSID: ssid }] : [];
+      networks = ssid ? [{ SSID: ssid }] : [];
     } else {
       // On Android, we can scan for networks
-      return await WiFiManager.loadWifiList();
+      networks = await WiFiManager.loadWifiList();
     }
+
+    // Filter out hidden networks first
+    const visibleNetworks = filterOutHiddenNetworks(networks);
+
+    // Filter out unsecured networks
+    const securedNetworks = filterOutUnsecuredNetworks(visibleNetworks);
+
+    // Then deduplicate networks by SSID, keeping only the strongest signal one
+    return deduplicateNetworksBySSID(securedNetworks);
   } catch (error) {
     console.error("Error scanning WiFi networks:", error);
     return [];
@@ -135,6 +182,22 @@ export const getSortedNetworksByFuzzyMatch = (
 
   // Map results back to WiFiNetwork objects
   return results.map((result) => result.item);
+};
+
+// Extract security protocol from capabilities string
+export const getSecurityProtocol = (capabilities?: string): string => {
+  if (!capabilities) return "Unknown";
+
+  if (capabilities.includes("WPA3")) return "WPA3";
+  if (capabilities.includes("WPA2")) return "WPA2";
+  if (capabilities.includes("WPA")) return "WPA";
+  if (capabilities.includes("WEP")) return "WEP";
+  if (capabilities.includes("PSK") && !capabilities.includes("WPA"))
+    return "PSK";
+  if (capabilities.includes("EAP") && !capabilities.includes("WPA"))
+    return "Enterprise";
+
+  return "Unsecured";
 };
 
 // Connect to a WiFi network
@@ -167,4 +230,42 @@ export const connectToWiFi = async (
     console.error("Error connecting to WiFi:", error);
     return false;
   }
+};
+
+// Deduplicate networks by SSID, keeping only the strongest signal one
+export const deduplicateNetworksBySSID = (
+  networks: WiFiNetwork[]
+): WiFiNetwork[] => {
+  if (!networks || networks.length === 0) return [];
+
+  // First filter out hidden networks
+  const visibleNetworks = filterOutHiddenNetworks(networks);
+
+  const uniqueNetworks = new Map<string, WiFiNetwork>();
+
+  // Process each network
+  for (const network of visibleNetworks) {
+    // If we haven't seen this SSID before, add it
+    if (!uniqueNetworks.has(network.SSID)) {
+      uniqueNetworks.set(network.SSID, network);
+      continue;
+    }
+
+    // If we've seen this SSID before, compare signal strength
+    const existingNetwork = uniqueNetworks.get(network.SSID)!;
+
+    // If the new network has a stronger signal (higher level), replace the existing one
+    // Note: WiFi signal strength is measured in dBm, where higher (less negative) values
+    // indicate stronger signals (e.g., -50 dBm is stronger than -80 dBm)
+    if (
+      network.level !== undefined &&
+      (existingNetwork.level === undefined ||
+        network.level > existingNetwork.level)
+    ) {
+      uniqueNetworks.set(network.SSID, network);
+    }
+  }
+
+  // Convert Map values to array
+  return Array.from(uniqueNetworks.values());
 };

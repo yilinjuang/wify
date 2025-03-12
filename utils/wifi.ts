@@ -336,7 +336,6 @@ export const connectToWiFi = async (
 
         // Check if we're connected to the expected network
         const connectionStatus = await checkWiFiConnectionStatus();
-        console.log(`Connection check ${i + 1}/15:`, connectionStatus);
 
         // If connected to the right network, return success
         if (connectionStatus.isConnected && connectionStatus.ssid === ssid) {
@@ -361,7 +360,6 @@ export const connectToWiFi = async (
 
         // Check if we're connected to the expected network
         const connectionStatus = await checkWiFiConnectionStatus();
-        console.log(`Connection check ${i + 1}/15:`, connectionStatus);
 
         // If connected to the right network, return success
         if (connectionStatus.isConnected && connectionStatus.ssid === ssid) {
@@ -431,7 +429,7 @@ export const checkWiFiConnectionStatus = async (): Promise<{
       isEnabled = await WiFiManager.isEnabled();
     } catch (enabledError) {
       // If isEnabled is not available, assume WiFi is enabled
-      console.log("isEnabled method not available, assuming WiFi is enabled");
+      console.warn("isEnabled method not available, assuming WiFi is enabled");
     }
 
     if (!isEnabled) {

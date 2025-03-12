@@ -35,7 +35,7 @@ export const recognizeWifiFromImage = async (
         combinedText += result.text + "\n";
       } catch (e) {
         // If a specific script fails, just continue
-        console.log(`Recognition with script ${scriptType} failed:`, e);
+        console.error(`Recognition with script ${scriptType} failed:`, e);
       }
     }
 

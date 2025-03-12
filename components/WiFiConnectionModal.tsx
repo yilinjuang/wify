@@ -45,7 +45,6 @@ const WiFiConnectionModal: React.FC<WiFiConnectionModalProps> = ({
         password,
         credentials.isWPA
       );
-      console.log("success", success);
 
       if (success) {
         Alert.alert(

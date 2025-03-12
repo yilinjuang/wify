@@ -10,6 +10,7 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -44,6 +45,8 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ onPermissionsNeeded }) => {
   const [showNetworkSelectionModal, setShowNetworkSelectionModal] =
     useState(false);
   const [flashMode, setFlashMode] = useState<FlashMode>("off");
+  const [isAnyModalOpen, setIsAnyModalOpen] = useState(false);
+  const [isImagePickerActive, setIsImagePickerActive] = useState(false);
 
   const cameraRef = useRef<CameraView>(null);
 
@@ -58,6 +61,43 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ onPermissionsNeeded }) => {
     })();
   }, []);
 
+  // Effect to track when any modal is open and control camera preview
+  useEffect(() => {
+    const modalOpen =
+      showConnectionModal ||
+      showNetworkSelectionModal ||
+      isProcessing ||
+      isImagePickerActive;
+
+    setIsAnyModalOpen(modalOpen);
+
+    // For Android, we need to manually pause/resume the camera preview
+    if (Platform.OS === "android" && cameraRef.current) {
+      if (modalOpen) {
+        // Pause camera on Android when modal opens
+        cameraRef.current.pausePreview();
+      } else {
+        // Resume camera on Android when modal closes
+        cameraRef.current.resumePreview();
+      }
+    }
+  }, [
+    showConnectionModal,
+    showNetworkSelectionModal,
+    isProcessing,
+    isImagePickerActive,
+  ]);
+
+  // Add cleanup effect for image picker
+  useEffect(() => {
+    return () => {
+      // Reset image picker state if component unmounts while picker is active
+      if (isImagePickerActive) {
+        setIsImagePickerActive(false);
+      }
+    };
+  }, [isImagePickerActive]);
+
   const toggleFlash = () => {
     setFlashMode(flashMode === "off" ? "on" : "off");
   };
@@ -66,7 +106,8 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ onPermissionsNeeded }) => {
     if (isProcessing) return;
 
     try {
-      // Request permission first
+      setIsImagePickerActive(true);
+
       const permissionResult =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -76,6 +117,7 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ onPermissionsNeeded }) => {
           "Photo library access is needed to select photos.",
           [{ text: "OK" }]
         );
+        setIsImagePickerActive(false);
         return;
       }
 
@@ -84,6 +126,8 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ onPermissionsNeeded }) => {
         allowsEditing: false,
         quality: 1,
       });
+
+      setIsImagePickerActive(false);
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const selectedImage = result.assets[0];
@@ -95,6 +139,7 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ onPermissionsNeeded }) => {
         "Error",
         "Failed to pick image from library. Please try again."
       );
+      setIsImagePickerActive(false);
     }
   };
 
@@ -220,7 +265,7 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ onPermissionsNeeded }) => {
   if (hasPermission === null) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color="#2196F3" />
+        <ActivityIndicator size="large" color="#FFFFFF" />
         <Text style={styles.text}>Requesting camera permission...</Text>
       </View>
     );
@@ -250,6 +295,8 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ onPermissionsNeeded }) => {
         barcodeScannerSettings={{
           barcodeTypes: ["qr"],
         }}
+        // Use active prop for iOS only
+        {...(Platform.OS === "ios" ? { active: !isAnyModalOpen } : {})}
       >
         <View style={styles.overlay}>
           <View style={styles.scanArea} />

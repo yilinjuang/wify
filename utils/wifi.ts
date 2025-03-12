@@ -208,13 +208,15 @@ export const connectToWiFi = async (
 ): Promise<boolean> => {
   try {
     if (Platform.OS === "android") {
-      // On Android, we can connect directly
-      await WiFiManager.connectToProtectedSSID(
-        ssid,
-        password,
-        false, // iOS only
-        false // Android only
-      );
+      // On Android, we can suggest the network
+      const success = await WiFiManager.suggestWifiNetwork([
+        {
+          ssid,
+          password,
+          isAppInteractionRequired: true,
+        },
+      ]);
+      console.log("success", success);
       return true;
     } else if (Platform.OS === "ios") {
       // On iOS, we need to use a different method

@@ -320,15 +320,32 @@ export const connectToWiFi = async (
   try {
     if (Platform.OS === "android") {
       // On Android, we can suggest the network
-      const success = await WiFiManager.suggestWifiNetwork([
+      // Don't wait for the promise to resolve since it doesn't always resolve
+      WiFiManager.suggestWifiNetwork([
         {
           ssid,
           password,
           isAppInteractionRequired: false,
         },
       ]);
-      console.log("success", success);
-      return true;
+
+      // Check connection status every second for up to 15 seconds
+      for (let i = 0; i < 15; i++) {
+        // Wait 1 second
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        // Check if we're connected to the expected network
+        const connectionStatus = await checkWiFiConnectionStatus();
+        console.log(`Connection check ${i + 1}/15:`, connectionStatus);
+
+        // If connected to the right network, return success
+        if (connectionStatus.isConnected && connectionStatus.ssid === ssid) {
+          return true;
+        }
+      }
+
+      // If we've checked 15 times and still not connected, return false
+      return false;
     } else if (Platform.OS === "ios") {
       // On iOS, we need to use a different method
       await WiFiManager.connectToProtectedSSIDPrefix(
@@ -336,7 +353,24 @@ export const connectToWiFi = async (
         password,
         !isWPA // iOS only
       );
-      return true;
+
+      // Check connection status every second for up to 15 seconds
+      for (let i = 0; i < 15; i++) {
+        // Wait 1 second
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        // Check if we're connected to the expected network
+        const connectionStatus = await checkWiFiConnectionStatus();
+        console.log(`Connection check ${i + 1}/15:`, connectionStatus);
+
+        // If connected to the right network, return success
+        if (connectionStatus.isConnected && connectionStatus.ssid === ssid) {
+          return true;
+        }
+      }
+
+      // If we've checked 15 times and still not connected, return false
+      return false;
     }
     return false;
   } catch (error) {
@@ -381,4 +415,42 @@ export const deduplicateNetworksBySSID = (
 
   // Convert Map values to array
   return Array.from(uniqueNetworks.values());
+};
+
+// Check current WiFi connection status
+export const checkWiFiConnectionStatus = async (): Promise<{
+  isConnected: boolean;
+  ssid?: string;
+  bssid?: string;
+}> => {
+  try {
+    // Check if WiFi is enabled - not all platforms support this
+    let isEnabled = true;
+    try {
+      // Use isEnabled if available
+      isEnabled = await WiFiManager.isEnabled();
+    } catch (enabledError) {
+      // If isEnabled is not available, assume WiFi is enabled
+      console.log("isEnabled method not available, assuming WiFi is enabled");
+    }
+
+    if (!isEnabled) {
+      return { isConnected: false };
+    }
+
+    // Get current SSID
+    try {
+      const ssid = await WiFiManager.getCurrentWifiSSID();
+
+      // If we have an SSID, we're connected
+      // Note: getCurrentBSSID might not be available on all platforms
+      return { isConnected: true, ssid };
+    } catch (ssidError) {
+      // If we can't get SSID, we're not connected
+      return { isConnected: false };
+    }
+  } catch (error) {
+    console.error("Error checking WiFi status:", error);
+    return { isConnected: false };
+  }
 };

@@ -97,7 +97,7 @@ The app requires the following permissions:
 
 ## Demo
 
-<video controls src="./demo.mp4"></video>
+![Demo Video](./demo.mp4)
 
 ## License
 

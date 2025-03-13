@@ -95,70 +95,10 @@ The app requires the following permissions:
 - **Permission Handling**: Gracefully handles permission requests and provides guidance when permissions are denied.
 - **Background App State**: Rechecks permissions when the app returns from background.
 
+## Demo
+
+<video controls src="demo.mp4"></video>
+
 ## License
 
 MIT
-
-## Cursor prompt
-
-```txt
-WiFi Scanner App Prompt (React Native)
-
-Objective
-
-Build a single-page React Native app that includes a camera-based WiFi scanner. The app should:
-  - Extract WiFi names and passwords from text recognition (OCR).
-  - Scan for nearby WiFi networks and match them with extracted data.
-  - Allow the user to connect to a matched WiFi network using react-native-wifi-reborn.
-
-Technology Stack
-  - Framework: React Native (not Expo)
-  - WiFi Handling: react-native-wifi-reborn
-  - OCR/Text Recognition: react-native-ml-kit
-
-Features & Functionality
-
-1. Permissions Handling
-  - Before scanning, check for and request the following permissions:
-  - Camera (for scanning WiFi text via react-native-ml-kit)
-  - Location (for scanning nearby WiFi networks, required by react-native-wifi-reborn)
-  - If permissions are denied:
-  - Show an explanation modal.
-  - Provide an option to redirect to device settings.
-
-2. Scanning & WiFi Detection
-  - Start the camera scanner to detect:
-  - Text-based WiFi details extracted via react-native-ml-kit (OCR).
-  - Scan for nearby WiFi networks using react-native-wifi-reborn.
-  - Show a loading indicator while scanning for networks.
-  - Fuzzy match the extracted WiFi name with scanned networks.
-
-3. User Interaction & Connection Flow
-  - If a matching WiFi network is found:
-  - Prompt the user to confirm the connection.
-  - Display an editable field for the password:
-  - If one password is detected, pre-fill it.
-  - If multiple passwords are detected, allow selection from a dropdown/list.
-  - Show "Connect" and "Cancel" buttons:
-  - Connect → Uses react-native-wifi-reborn to request a WiFi connection.
-  - Cancel → Returns the user to the camera scanner.
-
-4. Connection Feedback
-  - Success: Show a "Connected" alert.
-  - Failure: Show an alert with:
-  - The reason for failure (e.g., incorrect password, weak signal, permission denied).
-  - An option to retry or manually enter WiFi details.
-
-Implementation Considerations
-  - WiFi Connection (react-native-wifi-reborn):
-  - Use connectToProtectedSSID to connect to password-protected WiFi.
-  - Handle permission requirements on both Android and iOS.
-  - Provide an alternative deep link to WiFi settings if the connection fails.
-  - OCR via react-native-ml-kit:
-  - Perform text recognition on-device for fast and offline processing.
-  - Extract and clean up recognized text before attempting fuzzy matching.
-  - UI/UX Enhancements:
-  - Show a loading state when scanning for networks.
-  - Allow manual entry if scanning fails or a WiFi name isn't found.
-  - Offer a retry button for rescanning.
-```

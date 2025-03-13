@@ -69,6 +69,15 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "5eea2e1f-78e0-4f5e-8636-5fafef4be241"
+      }
+    },
+    "owner": "yilinjuang"
   }
 }

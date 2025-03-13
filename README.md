@@ -97,8 +97,9 @@ The app requires the following permissions:
 
 ## Demo
 
-<video controls src="demo.mp4"></video>
-
+<div>
+   <video controls src="demo.mp4"></video>
+</div>
 ## License
 
 MIT

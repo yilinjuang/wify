@@ -39,4 +39,5 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-app-example
+# google play service account
+google-play-service-account.json

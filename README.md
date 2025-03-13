@@ -82,7 +82,6 @@ The app requires the following permissions:
   - `WiFiScanner.tsx`: Main component for camera and WiFi text scanning
   - `WiFiConnectionModal.tsx`: Modal for connecting to WiFi networks
   - `PermissionsModal.tsx`: Modal for handling permission requests
-  - `WiFiNetworkSelectionModal.tsx`: Modal for selecting from multiple matching networks
 - `utils/`: Utility functions
   - `wifi.ts`: WiFi operations including scanning, connecting, and parsing
   - `textRecognition.ts`: OCR functionality for extracting WiFi credentials from images

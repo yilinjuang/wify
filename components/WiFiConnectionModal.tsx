@@ -1,6 +1,6 @@
+import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Modal,
   Platform,
@@ -27,7 +27,6 @@ const WiFiConnectionModal: React.FC<WiFiConnectionModalProps> = ({
   const [ssid, setSsid] = useState(credentials.ssid || "");
   const [password, setPassword] = useState(credentials.password || "");
   const [isConnecting, setIsConnecting] = useState(false);
-  const isAndroid = Platform.OS === "android";
 
   // Update state when credentials change
   useEffect(() => {
@@ -86,10 +85,10 @@ const WiFiConnectionModal: React.FC<WiFiConnectionModalProps> = ({
     >
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
-          <Text style={styles.modalTitle}>WiFi Connection</Text>
+          <Text style={styles.modalTitle}>Connect to WiFi</Text>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Network Name:</Text>
+            <Text style={styles.label}>SSID</Text>
             <TextInput
               style={styles.input}
               value={ssid}
@@ -102,7 +101,7 @@ const WiFiConnectionModal: React.FC<WiFiConnectionModalProps> = ({
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Password:</Text>
+            <Text style={styles.label}>Password</Text>
             <TextInput
               style={styles.input}
               value={password}
@@ -114,51 +113,45 @@ const WiFiConnectionModal: React.FC<WiFiConnectionModalProps> = ({
             />
           </View>
 
-          {isAndroid ? (
-            <View style={styles.qrContainer}>
+          {Platform.OS === "android" ? (
+            <>
               <Text style={styles.qrInstructions}>
-                Scan this QR code with another device to connect to this WiFi
-                network:
+                Use circle to search to scan and connect
               </Text>
-              <QRCode
-                value={getWifiConnectionString()}
-                size={200}
-                color="black"
-                backgroundColor="white"
-              />
+              <View style={styles.qrContainer}>
+                <QRCode
+                  value={getWifiConnectionString()}
+                  size={200}
+                  color="black"
+                  backgroundColor="white"
+                />
+              </View>
               <TouchableOpacity
                 style={[styles.button, styles.closeButton]}
                 onPress={onClose}
               >
-                <Text style={styles.buttonText}>Close</Text>
+                <Ionicons name="close" size={24} color="white" />
               </TouchableOpacity>
-            </View>
+            </>
           ) : (
             <View style={styles.buttonContainer}>
-              {isConnecting ? (
-                <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="small" color="#2196F3" />
-                  <Text style={styles.loadingText}>Connecting...</Text>
-                </View>
-              ) : (
-                <>
-                  <TouchableOpacity
-                    style={[styles.button, styles.connectButton]}
-                    onPress={handleConnect}
-                    disabled={isConnecting}
-                  >
-                    <Text style={styles.buttonText}>Connect</Text>
-                  </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, styles.connectButton]}
+                onPress={handleConnect}
+                disabled={isConnecting}
+              >
+                <Text style={styles.buttonText}>
+                  {isConnecting ? "Connecting..." : "Connect"}
+                </Text>
+              </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={[styles.button, styles.cancelButton]}
-                    onPress={onClose}
-                    disabled={isConnecting}
-                  >
-                    <Text style={styles.buttonText}>Cancel</Text>
-                  </TouchableOpacity>
-                </>
-              )}
+              <TouchableOpacity
+                style={[styles.button, styles.cancelButton]}
+                onPress={onClose}
+                disabled={isConnecting}
+              >
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>
@@ -215,17 +208,16 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
     width: "100%",
   },
   button: {
     borderRadius: 10,
     padding: 10,
     elevation: 2,
-    flex: 1,
     marginHorizontal: 5,
   },
   connectButton: {
+    flex: 1,
     backgroundColor: "#2196F3",
   },
   cancelButton: {
@@ -233,8 +225,6 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     backgroundColor: "#757575",
-    marginTop: 20,
-    width: "50%",
   },
   buttonText: {
     color: "white",
@@ -251,15 +241,14 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     fontSize: 16,
   },
-  qrContainer: {
-    alignItems: "center",
-    marginTop: 10,
-  },
   qrInstructions: {
     textAlign: "center",
-    marginBottom: 15,
+    marginBottom: 30,
     fontSize: 14,
     color: "#555",
+  },
+  qrContainer: {
+    marginBottom: 30,
   },
 });
 

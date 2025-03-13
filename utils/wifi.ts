@@ -292,31 +292,7 @@ export const connectToWiFi = async (
 ): Promise<boolean> => {
   try {
     if (Platform.OS === "android") {
-      // On Android, we can suggest the network
-      // Don't wait for the promise to resolve since it doesn't always resolve
-      WiFiManager.suggestWifiNetwork([
-        {
-          ssid,
-          password,
-          isAppInteractionRequired: false,
-        },
-      ]);
-
-      // Check connection status every second for up to 15 seconds
-      for (let i = 0; i < 15; i++) {
-        // Wait 1 second
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        // Check if we're connected to the expected network
-        const connectionStatus = await checkWiFiConnectionStatus();
-
-        // If connected to the right network, return success
-        if (connectionStatus.isConnected && connectionStatus.ssid === ssid) {
-          return true;
-        }
-      }
-
-      // If we've checked 15 times and still not connected, return false
+      // On Android, we use system built-in WiFi connection dialog via qr code
       return false;
     } else if (Platform.OS === "ios") {
       // On iOS, we need to use a different method

@@ -42,8 +42,7 @@ const PermissionsModal: React.FC<PermissionsModalProps> = ({
           <Text style={styles.modalTitle}>Permissions Required</Text>
 
           <Text style={styles.modalText}>
-            This app requires the following permissions to function. You cannot
-            use the app without granting these permissions:
+            This app needs the following permissions to work properly:
           </Text>
 
           <View style={styles.permissionItem}>
@@ -75,7 +74,7 @@ const PermissionsModal: React.FC<PermissionsModalProps> = ({
           </View>
 
           <Text style={styles.explanationText}>
-            • Camera permission is needed to scan WiFi credentials.
+            • Camera permission is required to capture WiFi credentials.
           </Text>
           <Text style={styles.explanationText}>
             • Location permission is required to scan for nearby WiFi networks.
@@ -83,8 +82,8 @@ const PermissionsModal: React.FC<PermissionsModalProps> = ({
 
           {showSettingsInstead && (
             <Text style={[styles.explanationText, styles.warningText]}>
-              You have permanently denied some permissions. You must enable them
-              in your device settings to use this app.
+              Some permissions were permanently denied. Please enable them in
+              your device settings.
             </Text>
           )}
 
@@ -94,7 +93,7 @@ const PermissionsModal: React.FC<PermissionsModalProps> = ({
                 style={[styles.button, styles.buttonRequest]}
                 onPress={onRequestPermissions}
               >
-                <Text style={styles.buttonText}>Request Permissions</Text>
+                <Text style={styles.buttonText}>Allow Permissions</Text>
               </TouchableOpacity>
             ) : null}
 

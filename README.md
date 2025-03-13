@@ -97,7 +97,7 @@ The app requires the following permissions:
 
 ## Demo
 
-[![Demo Video](./demo.mp4)](./demo.mp4)
+https://github.com/user-attachments/assets/a0dea5bd-db5a-4051-bb37-3e81c243e905
 
 ## License
 

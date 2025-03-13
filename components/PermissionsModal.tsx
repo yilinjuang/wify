@@ -41,10 +41,6 @@ const PermissionsModal: React.FC<PermissionsModalProps> = ({
         <View style={styles.modalView}>
           <Text style={styles.modalTitle}>Permissions Required</Text>
 
-          <Text style={styles.modalText}>
-            This app needs the following permissions to work properly:
-          </Text>
-
           <View style={styles.permissionItem}>
             <Text style={styles.permissionName}>Camera: </Text>
             <Text
@@ -54,9 +50,12 @@ const PermissionsModal: React.FC<PermissionsModalProps> = ({
               ]}
             >
               {permissionStatus.camera ? "Granted" : "Denied"}
-              {permissionStatus.cameraPermanentlyDenied ? " (Permanently)" : ""}
             </Text>
           </View>
+
+          <Text style={styles.explanationText}>
+            Camera permission is required to capture WiFi credentials.
+          </Text>
 
           <View style={styles.permissionItem}>
             <Text style={styles.permissionName}>Location: </Text>
@@ -67,42 +66,36 @@ const PermissionsModal: React.FC<PermissionsModalProps> = ({
               ]}
             >
               {permissionStatus.location ? "Granted" : "Denied"}
-              {permissionStatus.locationPermanentlyDenied
-                ? " (Permanently)"
-                : ""}
             </Text>
           </View>
 
           <Text style={styles.explanationText}>
-            • Camera permission is required to capture WiFi credentials.
-          </Text>
-          <Text style={styles.explanationText}>
-            • Location permission is required to scan for nearby WiFi networks.
+            Location permission is required to scan for nearby WiFi networks.
           </Text>
 
           {showSettingsInstead && (
             <Text style={[styles.explanationText, styles.warningText]}>
-              Some permissions were permanently denied. Please enable them in
-              your device settings.
+              Some permissions were denied. Please enable them in your device
+              settings.
             </Text>
           )}
 
           <View style={styles.buttonContainer}>
-            {!showSettingsInstead ? (
+            {showSettingsInstead ? (
+              <TouchableOpacity
+                style={[styles.button, styles.buttonSettings]}
+                onPress={openSettings}
+              >
+                <Text style={styles.buttonText}>Open Settings</Text>
+              </TouchableOpacity>
+            ) : (
               <TouchableOpacity
                 style={[styles.button, styles.buttonRequest]}
                 onPress={onRequestPermissions}
               >
                 <Text style={styles.buttonText}>Allow Permissions</Text>
               </TouchableOpacity>
-            ) : null}
-
-            <TouchableOpacity
-              style={[styles.button, styles.buttonSettings]}
-              onPress={openSettings}
-            >
-              <Text style={styles.buttonText}>Open Settings</Text>
-            </TouchableOpacity>
+            )}
           </View>
         </View>
       </View>
@@ -139,10 +132,6 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     textAlign: "center",
   },
-  modalText: {
-    marginBottom: 15,
-    textAlign: "center",
-  },
   permissionItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -157,7 +146,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   explanationText: {
-    marginTop: 10,
+    marginBottom: 15,
     textAlign: "left",
     width: "100%",
   },
@@ -166,11 +155,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginTop: 15,
     marginBottom: 5,
-    fontSize: 16,
-    textAlign: "center",
   },
   buttonContainer: {
-    marginTop: 20,
+    marginTop: 10,
     width: "100%",
   },
   button: {

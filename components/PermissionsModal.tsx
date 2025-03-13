@@ -75,8 +75,7 @@ const PermissionsModal: React.FC<PermissionsModalProps> = ({
           </View>
 
           <Text style={styles.explanationText}>
-            • Camera permission is needed to scan QR codes and recognize WiFi
-            credentials.
+            • Camera permission is needed to scan WiFi credentials.
           </Text>
           <Text style={styles.explanationText}>
             • Location permission is required to scan for nearby WiFi networks.

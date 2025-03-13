@@ -17,33 +17,6 @@ export interface WiFiCredentials {
   isWPA?: boolean;
 }
 
-// Parse WiFi QR code content
-export const parseWiFiQRCode = (data: string): WiFiCredentials | null => {
-  // Standard WiFi QR code format: WIFI:S:<SSID>;T:<WPA|WEP|>;P:<password>;;
-  try {
-    if (data.startsWith("WIFI:")) {
-      const ssidMatch = data.match(/S:(.*?);/);
-      const passwordMatch = data.match(/P:(.*?);/);
-      const typeMatch = data.match(/T:(.*?);/);
-
-      if (ssidMatch && ssidMatch[1]) {
-        return {
-          ssid: ssidMatch[1],
-          password: passwordMatch && passwordMatch[1] ? passwordMatch[1] : "",
-          isWPA:
-            typeMatch && typeMatch[1]
-              ? typeMatch[1].toUpperCase() === "WPA"
-              : true,
-        };
-      }
-    }
-    return null;
-  } catch (error) {
-    console.error("Error parsing WiFi QR code:", error);
-    return null;
-  }
-};
-
 // Extract WiFi credentials from OCR text
 export const extractWiFiFromText = (text: string): WiFiCredentials | null => {
   // Common patterns for WiFi information in multiple languages

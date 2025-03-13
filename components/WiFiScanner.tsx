@@ -15,7 +15,6 @@ import { PermissionStatus } from "../utils/permissions";
 import { recognizeWifiFromImage } from "../utils/textRecognition";
 import {
   getSortedNetworksByFuzzyMatch,
-  parseWiFiQRCode,
   scanWiFiNetworks,
   WiFiCredentials,
   WiFiNetwork,
@@ -28,7 +27,6 @@ interface WiFiScannerProps {
 }
 
 const WiFiScanner: React.FC<WiFiScannerProps> = ({ permissionStatus }) => {
-  const [scannedData, setScannedData] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [sortedNetworks, setSortedNetworks] = useState<WiFiNetwork[]>([]);
   const [selectedNetwork, setSelectedNetwork] = useState<WiFiNetwork | null>(
@@ -125,36 +123,6 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ permissionStatus }) => {
     }
   };
 
-  const handleBarCodeScanned = ({
-    type,
-    data,
-  }: {
-    type: string;
-    data: string;
-  }) => {
-    if (isProcessing) {
-      return;
-    }
-
-    setIsProcessing(true);
-    setScannedData(data);
-
-    // Try to parse WiFi QR code
-    const wifiCredentials = parseWiFiQRCode(data);
-
-    if (wifiCredentials) {
-      processWiFiCredentials(wifiCredentials);
-    } else {
-      // Not a WiFi QR code
-      setIsProcessing(false);
-      Alert.alert(
-        "Not a WiFi QR Code",
-        "The scanned QR code does not contain WiFi information. Please try again or use text recognition.",
-        [{ text: "OK", onPress: () => setScannedData(null) }]
-      );
-    }
-  };
-
   const takePicture = async () => {
     if (cameraRef.current && !isProcessing) {
       setIsProcessing(true);
@@ -234,13 +202,11 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ permissionStatus }) => {
 
   const handleCloseNetworkSelectionModal = () => {
     setShowNetworkSelectionModal(false);
-    setScannedData(null);
     setCredentials(null);
   };
 
   const handleCloseConnectionModal = () => {
     setShowConnectionModal(false);
-    setScannedData(null);
     setCredentials(null);
     setSelectedNetwork(null);
   };
@@ -256,10 +222,6 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ permissionStatus }) => {
         style={styles.camera}
         flash={flashMode}
         active={!isCameraActive}
-        onBarcodeScanned={scannedData ? undefined : handleBarCodeScanned}
-        barcodeScannerSettings={{
-          barcodeTypes: ["qr"],
-        }}
       >
         <View style={styles.overlay}>
           <View style={styles.scanArea} />

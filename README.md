@@ -1,10 +1,9 @@
 # Wify
 
-A React Native application that scans WiFi QR codes and text to extract WiFi credentials, matches them with nearby networks, and connects to them.
+A React Native application that scans WiFi text to extract WiFi credentials, matches them with nearby networks, and connects to them.
 
 ## Features
 
-- **QR Code Scanning**: Scan WiFi QR codes to extract network name and password.
 - **Text Recognition (OCR)**: Extract WiFi credentials from text in images.
 - **Image Picker**: Select images from gallery for WiFi credential extraction.
 - **WiFi Network Scanning**: Scan for nearby WiFi networks.
@@ -18,7 +17,7 @@ A React Native application that scans WiFi QR codes and text to extract WiFi cre
 - **Framework**: React Native with Expo
 - **Router**: Expo Router
 - **WiFi Management**: react-native-wifi-reborn
-- **Camera & QR Scanning**: expo-camera
+- **Camera**: expo-camera
 - **Text Recognition**: @react-native-ml-kit/text-recognition
 - **Image Picker**: expo-image-picker
 - **Location Services**: expo-location
@@ -59,7 +58,7 @@ A React Native application that scans WiFi QR codes and text to extract WiFi cre
 ## Usage
 
 1. Launch the app and grant the required permissions (camera and location).
-2. Point the camera at a WiFi QR code or text containing WiFi credentials.
+2. Point the camera at a WiFi text containing WiFi credentials.
 3. Alternatively, tap the gallery icon to select an image containing WiFi information.
 4. The app will scan for nearby WiFi networks and match them with the extracted credentials.
 5. If multiple networks match, you can select the correct one from a list.
@@ -70,7 +69,7 @@ A React Native application that scans WiFi QR codes and text to extract WiFi cre
 
 The app requires the following permissions:
 
-- **Camera**: To scan QR codes and capture images for text recognition.
+- **Camera**: To scan WiFi text.
 - **Location**: Required by the WiFi scanning functionality to discover nearby networks.
 - **Photo Library**: To access images for WiFi credential extraction.
 
@@ -80,7 +79,7 @@ The app requires the following permissions:
   - `index.tsx`: Main app component
   - `_layout.tsx`: App layout configuration
 - `components/`: React components
-  - `WiFiScanner.tsx`: Main component for camera and QR code scanning
+  - `WiFiScanner.tsx`: Main component for camera and WiFi text scanning
   - `WiFiConnectionModal.tsx`: Modal for connecting to WiFi networks
   - `PermissionsModal.tsx`: Modal for handling permission requests
   - `WiFiNetworkSelectionModal.tsx`: Modal for selecting from multiple matching networks
@@ -92,7 +91,6 @@ The app requires the following permissions:
 
 ## Key Features Implementation
 
-- **WiFi QR Code Parsing**: Extracts SSID, password, and security type from standard WiFi QR codes.
 - **Text Recognition**: Uses ML Kit to recognize text in multiple languages and extract WiFi credentials.
 - **Fuzzy Matching**: Uses Fuse.js to match extracted WiFi names with available networks, even with slight differences.
 - **Permission Handling**: Gracefully handles permission requests and provides guidance when permissions are denied.
@@ -110,7 +108,7 @@ WiFi Scanner App Prompt (React Native)
 Objective
 
 Build a single-page React Native app that includes a camera-based WiFi scanner. The app should:
-  - Extract WiFi names and passwords from QR codes or text recognition (OCR).
+  - Extract WiFi names and passwords from text recognition (OCR).
   - Scan for nearby WiFi networks and match them with extracted data.
   - Allow the user to connect to a matched WiFi network using react-native-wifi-reborn.
 
@@ -123,7 +121,7 @@ Features & Functionality
 
 1. Permissions Handling
   - Before scanning, check for and request the following permissions:
-  - Camera (for scanning QR codes and text via react-native-ml-kit)
+  - Camera (for scanning WiFi text via react-native-ml-kit)
   - Location (for scanning nearby WiFi networks, required by react-native-wifi-reborn)
   - If permissions are denied:
   - Show an explanation modal.
@@ -131,7 +129,6 @@ Features & Functionality
 
 2. Scanning & WiFi Detection
   - Start the camera scanner to detect:
-  - QR codes containing WiFi credentials (e.g., WIFI:S:MyWiFi;T:WPA;P:mypassword;;).
   - Text-based WiFi details extracted via react-native-ml-kit (OCR).
   - Scan for nearby WiFi networks using react-native-wifi-reborn.
   - Show a loading indicator while scanning for networks.

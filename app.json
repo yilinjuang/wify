@@ -56,7 +56,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to scan QR codes and recognize WiFi credentials.",
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to scan WiFi credentials.",
           "recordAudioAndroid": false
         }
       ],

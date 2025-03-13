@@ -1,61 +1,67 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Modal,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-import { WiFiCredentials, WiFiNetwork, connectToWiFi } from "../utils/wifi";
+import QRCode from "react-native-qrcode-svg";
+import { WiFiCredentials, connectToWiFi } from "../utils/wifi";
 
 interface WiFiConnectionModalProps {
   visible: boolean;
   credentials: WiFiCredentials;
-  matchedNetwork: WiFiNetwork | null;
   onClose: () => void;
 }
 
 const WiFiConnectionModal: React.FC<WiFiConnectionModalProps> = ({
   visible,
   credentials,
-  matchedNetwork,
   onClose,
 }) => {
+  const [ssid, setSsid] = useState(credentials.ssid || "");
   const [password, setPassword] = useState(credentials.password || "");
   const [isConnecting, setIsConnecting] = useState(false);
+  const isAndroid = Platform.OS === "android";
+
+  // Update state when credentials change
+  useEffect(() => {
+    setSsid(credentials.ssid || "");
+    setPassword(credentials.password || "");
+  }, [credentials]);
+
+  // Generate WiFi connection string for QR code
+  const getWifiConnectionString = () => {
+    const authType = credentials.isWPA ? "WPA" : "WEP";
+    return `WIFI:S:${ssid};T:${authType};P:${password};;`;
+  };
 
   const handleConnect = async () => {
-    if (!matchedNetwork) {
-      Alert.alert(
-        "No Matching Network",
-        "Could not find a matching WiFi network. Please make sure the network is in range.",
-        [{ text: "OK", onPress: onClose }]
-      );
+    if (!ssid.trim()) {
+      Alert.alert("Missing Network Name", "Please enter a WiFi network name.", [
+        { text: "OK" },
+      ]);
       return;
     }
 
     setIsConnecting(true);
 
     try {
-      const success = await connectToWiFi(
-        matchedNetwork.SSID,
-        password,
-        credentials.isWPA
-      );
+      const success = await connectToWiFi(ssid, password, credentials.isWPA);
 
       if (success) {
-        Alert.alert(
-          "Connected",
-          `Successfully connected to ${matchedNetwork.SSID}`,
-          [{ text: "OK", onPress: onClose }]
-        );
+        Alert.alert("Connected", `Successfully connected to ${ssid}`, [
+          { text: "OK", onPress: onClose },
+        ]);
       } else {
         Alert.alert(
           "Connection Failed",
-          "Failed to connect to the WiFi network. Please check the password and try again.",
+          "Failed to connect to the WiFi network. Please check the network name and password and try again.",
           [{ text: "OK" }]
         );
       }
@@ -82,12 +88,17 @@ const WiFiConnectionModal: React.FC<WiFiConnectionModalProps> = ({
         <View style={styles.modalView}>
           <Text style={styles.modalTitle}>WiFi Connection</Text>
 
-          <View style={styles.networkInfo}>
-            <Text style={styles.label}>Network:</Text>
-            <Text style={styles.networkName}>
-              {matchedNetwork ? matchedNetwork.SSID : credentials.ssid}
-              {!matchedNetwork && " (Not in range)"}
-            </Text>
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Network Name:</Text>
+            <TextInput
+              style={styles.input}
+              value={ssid}
+              onChangeText={setSsid}
+              placeholder="Enter WiFi network name"
+              placeholderTextColor="#999"
+              autoCapitalize="none"
+              editable={!isConnecting}
+            />
           </View>
 
           <View style={styles.inputContainer}>
@@ -103,36 +114,53 @@ const WiFiConnectionModal: React.FC<WiFiConnectionModalProps> = ({
             />
           </View>
 
-          <View style={styles.buttonContainer}>
-            {isConnecting ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color="#2196F3" />
-                <Text style={styles.loadingText}>Connecting...</Text>
-              </View>
-            ) : (
-              <>
-                <TouchableOpacity
-                  style={[
-                    styles.button,
-                    styles.connectButton,
-                    !matchedNetwork && styles.disabledButton,
-                  ]}
-                  onPress={handleConnect}
-                  disabled={!matchedNetwork || isConnecting}
-                >
-                  <Text style={styles.buttonText}>Connect</Text>
-                </TouchableOpacity>
+          {isAndroid ? (
+            <View style={styles.qrContainer}>
+              <Text style={styles.qrInstructions}>
+                Scan this QR code with another device to connect to this WiFi
+                network:
+              </Text>
+              <QRCode
+                value={getWifiConnectionString()}
+                size={200}
+                color="black"
+                backgroundColor="white"
+              />
+              <TouchableOpacity
+                style={[styles.button, styles.closeButton]}
+                onPress={onClose}
+              >
+                <Text style={styles.buttonText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.buttonContainer}>
+              {isConnecting ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="small" color="#2196F3" />
+                  <Text style={styles.loadingText}>Connecting...</Text>
+                </View>
+              ) : (
+                <>
+                  <TouchableOpacity
+                    style={[styles.button, styles.connectButton]}
+                    onPress={handleConnect}
+                    disabled={isConnecting}
+                  >
+                    <Text style={styles.buttonText}>Connect</Text>
+                  </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={[styles.button, styles.cancelButton]}
-                  onPress={onClose}
-                  disabled={isConnecting}
-                >
-                  <Text style={styles.buttonText}>Cancel</Text>
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
+                  <TouchableOpacity
+                    style={[styles.button, styles.cancelButton]}
+                    onPress={onClose}
+                    disabled={isConnecting}
+                  >
+                    <Text style={styles.buttonText}>Cancel</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+          )}
         </View>
       </View>
     </Modal>
@@ -168,20 +196,10 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     textAlign: "center",
   },
-  networkInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 20,
-    width: "100%",
-  },
   label: {
     fontSize: 16,
     fontWeight: "600",
     marginRight: 10,
-  },
-  networkName: {
-    fontSize: 16,
-    flex: 1,
   },
   inputContainer: {
     width: "100%",
@@ -213,8 +231,10 @@ const styles = StyleSheet.create({
   cancelButton: {
     backgroundColor: "#757575",
   },
-  disabledButton: {
-    backgroundColor: "#B0BEC5",
+  closeButton: {
+    backgroundColor: "#757575",
+    marginTop: 20,
+    width: "50%",
   },
   buttonText: {
     color: "white",
@@ -230,6 +250,16 @@ const styles = StyleSheet.create({
   loadingText: {
     marginLeft: 10,
     fontSize: 16,
+  },
+  qrContainer: {
+    alignItems: "center",
+    marginTop: 10,
+  },
+  qrInstructions: {
+    textAlign: "center",
+    marginBottom: 15,
+    fontSize: 14,
+    color: "#555",
   },
 });
 

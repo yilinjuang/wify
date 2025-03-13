@@ -14,13 +14,11 @@ import {
 import { PermissionStatus } from "../utils/permissions";
 import { recognizeWifiFromImage } from "../utils/textRecognition";
 import {
+  WiFiCredentials,
   getSortedNetworksByFuzzyMatch,
   scanWiFiNetworks,
-  WiFiCredentials,
-  WiFiNetwork,
 } from "../utils/wifi";
 import WiFiConnectionModal from "./WiFiConnectionModal";
-import WiFiNetworkSelectionModal from "./WiFiNetworkSelectionModal";
 
 interface WiFiScannerProps {
   permissionStatus?: PermissionStatus;
@@ -28,14 +26,8 @@ interface WiFiScannerProps {
 
 const WiFiScanner: React.FC<WiFiScannerProps> = ({ permissionStatus }) => {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [sortedNetworks, setSortedNetworks] = useState<WiFiNetwork[]>([]);
-  const [selectedNetwork, setSelectedNetwork] = useState<WiFiNetwork | null>(
-    null
-  );
   const [credentials, setCredentials] = useState<WiFiCredentials | null>(null);
   const [showConnectionModal, setShowConnectionModal] = useState(false);
-  const [showNetworkSelectionModal, setShowNetworkSelectionModal] =
-    useState(false);
   const [flashMode, setFlashMode] = useState<FlashMode>("off");
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isImagePickerActive, setIsImagePickerActive] = useState(false);
@@ -47,8 +39,7 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ permissionStatus }) => {
       return;
     }
 
-    const modalOpen =
-      showConnectionModal || showNetworkSelectionModal || isImagePickerActive;
+    const modalOpen = showConnectionModal || isImagePickerActive;
 
     if (modalOpen && isCameraActive) {
       cameraRef.current.pausePreview();
@@ -57,12 +48,7 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ permissionStatus }) => {
       cameraRef.current.resumePreview();
       setIsCameraActive(true);
     }
-  }, [
-    showConnectionModal,
-    showNetworkSelectionModal,
-    isProcessing,
-    isImagePickerActive,
-  ]);
+  }, [showConnectionModal, isProcessing, isImagePickerActive]);
 
   const toggleFlash = () => {
     setFlashMode(flashMode === "off" ? "on" : "off");
@@ -152,18 +138,18 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ permissionStatus }) => {
 
       if (extractedCredentials) {
         // Use the credentials found
-        processWiFiCredentials(extractedCredentials);
+        await processWiFiCredentials(extractedCredentials);
       } else {
         Alert.alert(
           "No WiFi Information Found",
           "Could not detect any WiFi credentials in the image. Please try again.",
           [{ text: "OK" }]
         );
-        setIsProcessing(false);
       }
     } catch (error) {
       console.error("Error processing image:", error);
       Alert.alert("Error", "Failed to process image. Please try again.");
+    } finally {
       setIsProcessing(false);
     }
   };
@@ -171,7 +157,6 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ permissionStatus }) => {
   const processWiFiCredentials = async (wifiCredentials: WiFiCredentials) => {
     setCredentials(wifiCredentials);
 
-    // Always scan for WiFi networks to ensure fresh data
     try {
       setIsProcessing(true);
       // Scan for networks and update state
@@ -182,33 +167,36 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ permissionStatus }) => {
         wifiCredentials.ssid,
         freshNetworks
       );
-      setSortedNetworks(sorted);
 
-      // Show network selection modal
-      setShowNetworkSelectionModal(true);
+      // If we have matches, use the most confident one
+      if (sorted.length > 0) {
+        // Update the credentials with the most confident match
+        const bestMatch = sorted[0];
+        setCredentials({
+          ...wifiCredentials,
+          ssid: bestMatch.SSID,
+        });
+      }
+
+      // Show connection modal with either the original or updated SSID
+      setShowConnectionModal(true);
     } catch (error) {
       console.error("Error scanning WiFi:", error);
-      Alert.alert("Error", "Failed to scan WiFi networks. Please try again.");
+      Alert.alert(
+        "Error",
+        "Failed to scan WiFi networks. Proceeding with detected credentials.",
+        [{ text: "OK" }]
+      );
+      // Still show the connection modal with the original credentials
+      setShowConnectionModal(true);
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const handleSelectNetwork = (network: WiFiNetwork) => {
-    setSelectedNetwork(network);
-    setShowNetworkSelectionModal(false);
-    setShowConnectionModal(true);
-  };
-
-  const handleCloseNetworkSelectionModal = () => {
-    setShowNetworkSelectionModal(false);
-    setCredentials(null);
-  };
-
   const handleCloseConnectionModal = () => {
     setShowConnectionModal(false);
     setCredentials(null);
-    setSelectedNetwork(null);
   };
 
   if (!permissionStatus?.allGranted) {
@@ -257,21 +245,10 @@ const WiFiScanner: React.FC<WiFiScannerProps> = ({ permissionStatus }) => {
         </View>
       )}
 
-      {showNetworkSelectionModal && credentials && (
-        <WiFiNetworkSelectionModal
-          visible={showNetworkSelectionModal}
-          networks={sortedNetworks}
-          searchTerm={credentials.ssid}
-          onSelectNetwork={handleSelectNetwork}
-          onCancel={handleCloseNetworkSelectionModal}
-        />
-      )}
-
-      {showConnectionModal && credentials && selectedNetwork && (
+      {showConnectionModal && credentials && (
         <WiFiConnectionModal
           visible={showConnectionModal}
           credentials={credentials}
-          matchedNetwork={selectedNetwork}
           onClose={handleCloseConnectionModal}
         />
       )}

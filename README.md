@@ -2,6 +2,14 @@
 
 A React Native application that scans WiFi text to extract WiFi credentials, matches them with nearby networks, and connects to them.
 
+## Why I Built This
+
+I travel and work remotely a lot. Every new place—hotels, cafes, coworking spaces—comes with a new WiFi network. Sometimes there’s a QR code, which makes things easy, but more often, it’s a hassle: manually searching for the right SSID (especially frustrating when hotels have a different one for each room) and typing long, error-prone passwords.
+
+To simplify this, I built this app. It uses the phone’s camera to capture WiFi details (network name and password) from printed text and instantly generates a QR code on the screen. With Google Circle to Search or Google Lens, connecting is effortless. An image from the gallery can also be imported instead of using the camera.
+
+I also built [Wify for Mac](https://github.com/yilinjuang/wify-mac), which scans Wi-Fi QR codes using a Mac’s camera and connects to the corresponding network instantly—perfect for syncing Wi-Fi credentials across Android and Mac without manual entry.
+
 ## Features
 
 - **Text Recognition (OCR)**: Extract WiFi credentials from text in images.
@@ -26,10 +34,16 @@ A React Native application that scans WiFi text to extract WiFi credentials, mat
 
 ## Installation
 
+<a href="https://play.google.com/store/apps/details?id=com.yilinjuang.wify">
+  <img alt="Get it on Google Play" src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" width="200px"/>
+</a>
+
+### Manual Installation
+
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/yourusername/wify.git
+   git clone https://github.com/yilinjuang/wify.git
    cd wify
    ```
 

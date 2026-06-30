@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "scheme": "wify",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.yilinjuang.wify",
@@ -65,7 +64,9 @@
         {
           "locationWhenInUsePermission": "This app requires location access to scan for nearby WiFi networks."
         }
-      ]
+      ],
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
